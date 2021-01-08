@@ -68,19 +68,17 @@ def load_data(inputPath,variables,criteria):
     my_cols_list=variables
     data = pd.DataFrame(columns=my_cols_list)
     keys=['HH','bckg']
-    #keys=['HH']
     data = pd.DataFrame(columns=my_cols_list)
     for key in keys :
         print('key: ', key)
         if 'HH' in key:
             sampleNames=key
-            subdir_name = '2017/Signal'
-            #fileNames = ['ggF_SM_WWgg_qqlnugg_Hadded_WithTaus']
+            subdir_name = 'Signal'
             fileNames = ['HHWWgg-SL-SM-NLO-2017']
             target=1
         else:
             sampleNames = key
-            subdir_name = '2017/Bkgs'
+            subdir_name = 'Bkgs'
             fileNames = [
             'DiPhotonJetsBox_MGG-80toInf_13TeV-Sherpa_Hadded',
             #'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV_Pythia8_Hadded',
@@ -272,9 +270,13 @@ def main():
     parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
     parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
     parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
+    parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
     args = parser.parse_args()
     do_model_fit = args.train_model
     suffix = args.suffix
+
+    # Create instance of the input files directory
+    inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
@@ -320,9 +322,6 @@ def main():
     column_headers.append('classweight')
     column_headers.append('process_ID')
 
-    # Create instance of the input files directory
-    inputs_file_path = 'HHWWgg_DataSignalMCnTuples/'
-
     # Load ttree into .csv including all variables listed in column_headers
     print('<train-DNN> Input file path: ', inputs_file_path)
     outputdataframe_name = '%s/output_dataframe.csv' %(output_directory)
@@ -352,6 +351,8 @@ def main():
     print('<train-DNN> Training dataset shape: ', traindataset.shape)
     print('<train-DNN> Validation dataset shape: ', valdataset.shape)
 
+
+    # Event weights
     weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
     weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
     weights_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'weight']
