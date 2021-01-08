@@ -1,6 +1,6 @@
 # HHWWyy_DNN
-### Author: Joshuha Thomas-Wilsker
-### Institute of High Energy Physics
+### Authors: Joshuha Thomas-Wilsker
+### Institutes: IHEP Beijing, CERN
 Package used to train deep neural network for HH->WWyy analysis.
 
 ## Environment settings
