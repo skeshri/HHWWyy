@@ -1,9 +1,9 @@
-###HHWWyy_DNN
-##Author: Joshuha Thomas-Wilsker
-##Institute of High Energy Physics
+### HHWWyy_DNN
+## Author: Joshuha Thomas-Wilsker
+## Institute of High Energy Physics
 Package used to train deep neural network for HH->WWyy analysis.
 
-##Environment settings
+## Environment settings
 Several non-standard libraries must be present in your python environment.
 To ensure they are present I suggest cloning this library onto a machine/area
 for which you have root access. Then setup a conda environment for python 3.7
@@ -33,8 +33,7 @@ you haven't got in the enviroment setup:
 conda install <new_library>
 ```
 
-
-##Basic training
+## Basic training
 Running the code:
 ```
 python train-BinaryDNN.py -t <0 or 1> -s <suffix_for_output_dir> -i <input_files_path>
@@ -56,6 +55,6 @@ The script 'train-BinaryDNN.py' performs several tasks:
 - The model along with a schematic diagram and .json containing a human readable version of the moel parameters is also saved.
 - Diagnostic plots along with the model '.h5' and the dataframe will be stored in the output directory.
 
-##The Plotting package
+## The Plotting package
 
-##Evaluating the networks performance
+## Evaluating the networks performance
