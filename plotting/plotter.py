@@ -1,5 +1,5 @@
 import numpy as np
-import shap
+#import shap
 import pandas
 import os
 import sklearn
@@ -75,6 +75,39 @@ class plotter(object):
             #ax.set_yticklabels(np.flipud(self.labels), minor=False, rotation=45)
             ax.set_yticklabels(self.labels, minor=False, rotation=45)
 
+        plt.tight_layout()
+
+        return
+
+    def ROC(self, model, X_test, Y_test, X_train, Y_train):
+        y_pred_keras_test = model.predict(X_test).ravel()
+        fpr_keras_test, tpr_keras_test, thresholds_keras_test = roc_curve(Y_test, y_pred_keras_test)
+        auc_keras_test = auc(fpr_keras_test, tpr_keras_test)
+
+        y_pred_keras_train = model.predict(X_train).ravel()
+        fpr_keras_train, tpr_keras_train, thresholds_keras_train = roc_curve(Y_train, y_pred_keras_train)
+        auc_keras_train = auc(fpr_keras_train, tpr_keras_train) 
+        
+        self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10)) 
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.plot(fpr_keras_test, tpr_keras_test, label='Test (area = {:.3f})'.format(auc_keras_test))
+        plt.plot(fpr_keras_train, tpr_keras_train, label='Train (area = {:.3f})'.format(auc_keras_train))
+        plt.xlabel('False positive rate')
+        plt.ylabel('True positive rate')
+        plt.title('ROC curve')
+        plt.legend(loc='best')
+        plt.tight_layout()
+
+        return
+
+    def history_plot(self, history, label='accuracy'):
+        self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10)) 
+        plt.plot(history.history[label])
+        plt.plot(history.history['val_'+label])
+        plt.title('model '+label)
+        plt.ylabel(label)
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='best')
         plt.tight_layout()
 
         return
