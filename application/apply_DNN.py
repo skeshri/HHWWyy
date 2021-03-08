@@ -28,7 +28,7 @@ from keras.callbacks import EarlyStopping
 from root_numpy import root2array, tree2array
 
 # python looks here for its packages: $PYTHONPATH. Need to add path to $PYTHONPATH so python can find the required packages.
-sys.path.insert(0, '/Users/joshuhathomas-wilsker/Documents/work/lxplus_remote/work/private/IHEP/HH/HHWWyy/')
+sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_10_6_8/src/HHWWyy/')
 from plotting.plotter import plotter
 
 class apply_DNN(object):
@@ -62,8 +62,12 @@ class apply_DNN(object):
 
     def load_data(self, inputPath, variables, criteria, process):
         my_cols_list=variables
+        print '\n\nmy_cols_list: \n',my_cols_list,'\n\n'
         data = pd.DataFrame(columns=my_cols_list)
-        if 'HHWWgg-SL-SM-NLO-2017' in process:
+        print "my_cols_list[:-1]: \n",my_cols_list[:-1]
+        print "my_cols_list[:-2]: \n",my_cols_list[:-2]
+        if 'GluGluToHHTo2G4Q_node_cHHH1_2018' in process:
+            print "Signal..."
             sampleNames=process
             fileNames = [process]
             target=1
@@ -77,9 +81,13 @@ class apply_DNN(object):
             treename=[
             'GluGluToHHTo2G2Qlnu_node_cHHH1_TuneCP5_PSWeights_13TeV_powheg_pythia8alesauva_2017_1_10_6_4_v0_RunIIFall17MiniAODv2_PU2017_12Apr2018_94X_mc2017_realistic_v14_v1_1c4bfc6d0b8215cc31448570160b99fdUSER',
             ]
+        elif 'GluGluToHHTo2G4Q_node_cHHH1_2018' in process:
+            treename=[
+            'GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1',
+            ]
         elif 'DiPhotonJetsBox_MGG' in process:
             treename=[
-            'DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa',
+            'DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1',
             ]
         elif 'GJet_Pt-20toInf' in process:
             treename = [
@@ -179,7 +187,7 @@ class apply_DNN(object):
         tfile = ROOT.TFile(filename_fullpath)
         for tname in treename:
             print('<apply_DNN> TTree: ', tname)
-            ch_0 = tfile.Get(tname)
+            ch_0 = tfile.Get("tagsDumper/trees/"+tname)
             if ch_0 is not None :
                 #chunk_arr = tree2array(tree=ch_0, selection=criteria)
                 chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-1], selection=criteria)

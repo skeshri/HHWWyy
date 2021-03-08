@@ -9,7 +9,7 @@ import ROOT
 import sys
 from keras.models import load_model
 from array import array
-sys.path.insert(0, '/afs/cern.ch/work/j/jthomasw/private/IHEP/ttHML/github/ttH_multilepton/keras-DNN/')
+sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_10_6_8/src/HHWWyy/')
 from plotting.plotter import plotter
 from ROOT import TFile, TTree, gDirectory, gPad
 from sklearn.preprocessing import LabelEncoder
@@ -32,6 +32,7 @@ def main():
 
     parser.add_argument('-p', '--processName', dest='processName', help='Process name. List of options in keys of process_filename dictionary', default=[], type=str, nargs='+')
     parser.add_argument('-d', '--modeldir', dest='modeldir', help='Option to choose directory containing trained model')
+    parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
 
     args = parser.parse_args()
     processes = args.processName
@@ -54,12 +55,27 @@ def main():
 
     # Dictionary of filenames to be run over along with their keys.
     process_filename = {
-    'HHWWgg' : ('HHWWgg-SL-SM-NLO-2017'),
-    'DiPhoton' : ('DiPhotonJetsBox_MGG-80toInf_13TeV-Sherpa_Hadded'),
+    # 'HHWWgg' : ('HHWWgg-SL-SM-NLO-2017'),
+    'HHWWgg' : ('GluGluToHHTo2G4Q_node_cHHH1_2018'),
+    'DYJetsToLL_M-50': ('DYJetsToLL_M-50_TuneCP5_13TeV'),
+    'DiPhoton':  ('DiPhotonJetsBox_MGG-80toInf_13TeV'),
+
+    # 'TTGG_0Jets_TuneCP5_13TeV': ('TTGG_0Jets_TuneCP5_13TeV'),
+    # 'TTGJets_TuneCP5_13TeV':    ('TTGJets_TuneCP5_13TeV'),
+    # 'TTJets_TuneCP5_13TeV': ('TTJets_TuneCP5_13TeV'),
+    # 'WW_TuneCP5_13TeV': ('WW_TuneCP5_13TeV-pythia8',   ),
+    # 'QCD_Pt':   ('QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV'),
+    # 'QCD_Pt':   ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    # 'GJet_Pt':  ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+    # 'GJet_Pt':  ('GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV'),
+    # 'GJet_Pt':  ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    # 'QCD_Pt':   ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+
+    # 'DiPhoton' : ('DiPhotonJetsBox_MGG-80toInf_13TeV-Sherpa_Hadded'),
     'GJet_Pt-20toInf' : ('GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV_Pythia8_Hadded'),
     'GJet_Pt-20to40' : ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV_Pythia8_Hadded'),
     'GJet_Pt-40toInf' : ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV_Pythia8_Hadded') ,
-    'DYJetsToLL_M-50' : ('DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8_Hadded'),
+    # 'DYJetsToLL_M-50' : ('DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8_Hadded'),
     'TTGJets' : ('TTGJets_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_Hadded'),
     'TTGG' : ('TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8_Hadded'),
     'TTJets_HT-600to800' : ('TTJets_HT-600to800_TuneCP5_13TeV-madgraphMLM-pythia8_Hadded'),
@@ -84,6 +100,10 @@ def main():
 
     training_columns = column_headers[:-2]
     num_variables = len(training_columns)
+    print "column_headers: ",column_headers
+    print "len(column_headers): ",len(column_headers)
+    print "training_columns: ",training_columns
+    print "len(training_columns): ",len(training_columns)
 
     # Load trained model
     model_name_1 = os.path.join('../',modeldir,'model.h5')
@@ -102,11 +122,11 @@ def main():
     for process in processes:
         print('<run_network_evaluation> Process: ', process)
         current_sample_name = process_filename.get(process)
-        inputs_file_path = '/Users/joshuhathomas-wilsker/Documents/work/lxplus_remote/work/private/IHEP/HH/HHWWyy/HHWWgg_DataSignalMCnTuples/2017/'
+        inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
         if 'HHWWgg' in process:
             inputs_file_path += 'Signal/'
         else:
-            inputs_file_path += 'Bkgs/'
+            inputs_file_path += 'Backgrounds/'
 
         print('<run_network_evaluation> Input file directory: ', inputs_file_path)
 
@@ -119,12 +139,14 @@ def main():
             os.makedirs(samples_final_path_dir)
 
         dataframe_name = '%s/%s_dataframe.csv' %(samples_final_path_dir,process)
-        if os.path.isfile(dataframe_name):
+        print "dataframe_name: ",dataframe_name
+        if os.path.isfile(dataframe_name) and (args.load_dataset == 0):
             print('<run_network_evaluation> Loading %s . . . . ' % dataframe_name)
             data = pandas.read_csv(dataframe_name)
         else:
             print('<run_network_evaluation> Making *new* data file from %s . . . . ' % (inputs_file_path))
-            selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 0.35 ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 0.25 ) && passbVeto==1 && ExOneLep==1 && N_goodJets>=1 )'
+            selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 1/3 ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 1/4 ) )'
+            # selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 0.35 ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 0.25 ) && passbVeto==1 && ExOneLep==1 && N_goodJets>=1 )'
             data = DNN_applier.load_data(inputs_file_path,column_headers,selection_criteria,current_sample_name)
             if len(data) == 0 :
                 print('<run_network_evaluation> No data! Next file.')
@@ -142,9 +164,15 @@ def main():
         print("<run_network_evaluation> Total length of HH = %i, bckg = %i" % (nHH, nbckg))
 
         # Create dataset from dataframe to evaluate DNN
+        print "training_columns.shape: ",len(training_columns)
         X_test = data[training_columns].values
+        print "X_test.shape:\n",X_test.shape
+        print "X_test:\n",X_test
         result_probs_ = model_1.predict(np.array(X_test))
+        print "result_probs_:\n",result_probs_
+        print(data)
         nEvent = data['event']
+
 
         if len(result_probs_) < 1.:
             print('<run_network_evaluation> Warning: only %s test values.' % (len(result_probs_)))
@@ -156,9 +184,13 @@ def main():
         # key = event number : value = DNN output
         eventnum_resultsprob_dict = {}
         for index in range(len(nEvent)):
-            #print('nEvent= %s , prob = %s' % (nEvent[index], result_probs_[index])
+            # print 'nEvent= %s , prob = %s' % (nEvent[index], result_probs_[index])
             eventnum_resultsprob_dict[nEvent[index]] = result_probs_[index]
             model1_probs_.append(result_probs_[index])
+        print "="*51
+        print "eventnum_resultsprob_dict:"
+        print eventnum_resultsprob_dict
+        print "="*51
 
         print(current_sample_name)
         infile = inputs_file_path+current_sample_name+".root"
@@ -168,8 +200,10 @@ def main():
         data_file = TFile.Open(infile)
         if 'HHWWgg' in current_sample_name:
             treename=['GluGluToHHTo2G2Qlnu_node_cHHH1_TuneCP5_PSWeights_13TeV_powheg_pythia8alesauva_2017_1_10_6_4_v0_RunIIFall17MiniAODv2_PU2017_12Apr2018_94X_mc2017_realistic_v14_v1_1c4bfc6d0b8215cc31448570160b99fdUSER']
+        elif 'GluGluToHHTo2G4Q' in current_sample_name:
+            treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in current_sample_name:
-            treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa']
+            treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
         elif 'GJet_Pt-20toInf' in current_sample_name:
             treename = [
             'GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8'
@@ -242,7 +276,7 @@ def main():
             treename=['ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8'
             ]
         else:
-            print('<run_network_evaluation> Warning: Process name not recognised. Exiting.')
+            print('<run_network_evaluation> Warning: Process name not recognised. Exiting.',current_sample_name)
             exit(0)
 
         # Open each TTree in file and loop over events.
@@ -250,7 +284,7 @@ def main():
         # Score assigned to event according to event number.
         for tname in treename:
             print('<run_network_evaluation> TTree: ', tname)
-            data_tree = data_file.Get(tname)
+            data_tree = data_file.Get("tagsDumper/trees/"+tname)
             # Check if input file is zombie
             if data_file.IsZombie():
                 raise IOError('missing file')
@@ -300,10 +334,10 @@ def main():
                 Eventnum_ = data_tree.event
                 EventWeight_ = array('d',[0])
                 EventWeight_ = data_tree.weight
-                passbVeto  = array('d',[0])
-                passbVeto = data_tree.passbVeto
-                ExOneLep  = array('d',[0])
-                ExOneLep = data_tree.ExOneLep
+                # passbVeto  = array('d',[0])
+                # passbVeto = data_tree.passbVeto
+                # ExOneLep  = array('d',[0])
+                # ExOneLep = data_tree.ExOneLep
                 Leading_Photon_pt = array('d',[0])
                 Leading_Photon_pt = data_tree.Leading_Photon_pt
                 Subleading_Photon_pt = array('d',[0])
@@ -313,7 +347,8 @@ def main():
                 N_goodJets = array('d',[0])
                 N_goodJets = data_tree.N_goodJets
 
-                if ( (Leading_Photon_pt/CMS_hgg_mass)>0.35 and (Subleading_Photon_pt/CMS_hgg_mass)>0.25 and passbVeto==1 and ExOneLep==1 and N_goodJets>=1):
+                # if ( (Leading_Photon_pt/CMS_hgg_mass)>0.35 and (Subleading_Photon_pt/CMS_hgg_mass)>0.25 and passbVeto==1 and ExOneLep==1 and N_goodJets>=1):
+                if ( (Leading_Photon_pt/CMS_hgg_mass)>1/3 and (Subleading_Photon_pt/CMS_hgg_mass)>1/4):
                     pass_selection = 1
                 else:
                     pass_selection = 0
@@ -326,11 +361,20 @@ def main():
                 else:
                     true_process.append(0)
 
-                EventWeights_.append(EventWeight_)
-                histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)
-                DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
-                output_tree.Fill()
+                # print "EventWeight_ = ",EventWeight_,"\tEventnum_    = ",Eventnum_
+                # print "\teventnum_resultsprob_dict.get(Eventnum_)[0]",type(eventnum_resultsprob_dict.get(Eventnum_))
+                if (eventnum_resultsprob_dict.get(Eventnum_) != None): 
+                    # print "\tRam eventnum_resultsprob_dict.get(Eventnum_)[0]",eventnum_resultsprob_dict.get(Eventnum_)[0]
+                    # print "\teventnum_resultsprob_dict.get(Eventnum_)[0]",eventnum_resultsprob_dict.get(Eventnum_)[0]
+                    EventWeights_.append(EventWeight_)
+                    histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)# DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
+                    DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
+                    output_tree.Fill()
 
+                # EventWeights_.append(EventWeight_)
+                # histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)# DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
+                # DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
+                # output_tree.Fill()
         eventnum_resultsprob_dict.clear()
         output_file.Write()
         output_file.Close()
