@@ -7,6 +7,7 @@
 # for HH->WWyy analysis.
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime
 import pickle
 #import shap
 from array import array
@@ -21,6 +22,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import MinMaxScaler
@@ -68,6 +70,7 @@ def load_data_from_EOS(self, directory, mask='', prepend='root://eosuser.cern.ch
 def load_data(inputPath,variables,criteria):
     # Load dataset to .csv format file
     my_cols_list=variables
+    print "my_cols_list: ",my_cols_list
     data = pd.DataFrame(columns=my_cols_list)
     keys=['HH','bckg']
     data = pd.DataFrame(columns=my_cols_list)
@@ -77,205 +80,225 @@ def load_data(inputPath,variables,criteria):
             sampleNames=key
             subdir_name = 'Signal'
             fileNames = [
-            'GluGluToHHTo2G2Qlnu_node_cHHH1_2017_HHWWggTag_0_odd_MoreVars',
-            #'GluGluToHHTo2G2Qlnu_node_cHHH1_2017_HHWWggTag_0_even_MoreVars'
+            'GluGluToHHTo2G4Q_node_cHHH1_2018'
+            # 'GluGluToHHTo2G2Qlnu_node_cHHH1_2017_HHWWggTag_1_odd_MoreVars',
+            #'GluGluToHHTo2G2Qlnu_node_cHHH1_2017_HHWWggTag_1_even_MoreVars'
             ]
             target=1
         else:
             sampleNames = key
             subdir_name = 'Backgrounds'
             fileNames = [
-            #'DiPhotonJetsBox_M40_80_HHWWggTag_0_MoreVars',
-	    'DiPhotonJetsBox_MGG-80toInf_HHWWggTag_0_MoreVars',
-	    #'GJet_Pt-20to40_HHWWggTag_0_MoreVars',
-            #'GJet_Pt-20toInf_HHWWggTag_0_MoreVars',
-	    'GJet_Pt-40toInf_HHWWggTag_0_MoreVars',
-	    #'QCD_Pt-30to40_HHWWggTag_0_MoreVars',
-	    #'QCD_Pt-30toInf_HHWWggTag_0_MoreVars',
-   	    #'QCD_Pt-40toInf_HHWWggTag_0_MoreVars',
-	    #'DYJetsToLL_M-50_HHWWggTag_0_MoreVars',
-	    'TTGG_0Jets_HHWWggTag_0_MoreVars',
-	    'TTGJets_TuneCP5_HHWWggTag_0_MoreVars',
-   	    #'TTJets_HT-600to800_HHWWggTag_0_MoreVars',
-	    #'TTJets_HT-800to1200_HHWWggTag_0_MoreVars',
-	    #'TTJets_HT-1200to2500_HHWWggTag_0_MoreVars',
-	    #'TTJets_HT-2500toInf_HHWWggTag_0_MoreVars',
-	    'ttWJets_HHWWggTag_0_MoreVars',
-	    'TTJets_TuneCP5_extra_HHWWggTag_0_MoreVars',
-	    #'W1JetsToLNu_LHEWpT_0-50_HHWWggTag_0_MoreVars',
-	    'W1JetsToLNu_LHEWpT_50-150_HHWWggTag_0_MoreVars',
-	    'W1JetsToLNu_LHEWpT_150-250_HHWWggTag_0_MoreVars',
-	    'W1JetsToLNu_LHEWpT_250-400_HHWWggTag_0_MoreVars',
-	    'W1JetsToLNu_LHEWpT_400-inf_HHWWggTag_0_MoreVars',
-	    #'W2JetsToLNu_LHEWpT_0-50_HHWWggTag_0_MoreVars',	
-	    'W2JetsToLNu_LHEWpT_50-150_HHWWggTag_0_MoreVars',
-	    'W2JetsToLNu_LHEWpT_150-250_HHWWggTag_0_MoreVars',
-	    'W2JetsToLNu_LHEWpT_250-400_HHWWggTag_0_MoreVars',
-	    'W2JetsToLNu_LHEWpT_400-inf_HHWWggTag_0_MoreVars',
-	    #'W3JetsToLNu_HHWWggTag_0_MoreVars',
-	    #'W4JetsToLNu_HHWWggTag_0_MoreVars',
-	    'WGGJets_HHWWggTag_0_MoreVars',
-	    'WGJJToLNuGJJ_EWK_HHWWggTag_0_MoreVars',
-	    #'WGJJToLNu_EWK_QCD_HHWWggTag_0_MoreVars',
-	    #'WWTo1L1Nu2Q_HHWWggTag_0_MoreVars',
-	    #'WW_TuneCP5_HHWWggTag_0_MoreVars',
-            #'GluGluHToGG_HHWWggTag_0_MoreVars',
-            #'VBFHToGG_HHWWggTag_0_MoreVars',
-            #'VHToGG_HHWWggTag_0_MoreVars', 
-            #'ttHJetToGG_HHWWggTag_0_MoreVars' 
+
+                'DiPhotonJetsBox_M40_80',
+                'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
+                'DiPhotonJetsBox_MGG-80toInf_13TeV',
+                'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                'DYJetsToLL_M-50_TuneCP5_13TeV',
+                # 'THQ_ctcvcp_HToGG_M125_13TeV',
+                'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                'TTGG_0Jets_TuneCP5_13TeV',
+                'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
+                'TTGJets_TuneCP5_13TeV',
+                'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                'TTJets_TuneCP5_13TeV',
+                'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                'WW_TuneCP5_13TeV-pythia8'
+
+            #'DiPhotonJetsBox_M40_80_HHWWggTag_1_MoreVars',
+	    # 'DiPhotonJetsBox_MGG-80toInf_HHWWggTag_1_MoreVars',
+	    # #'GJet_Pt-20to40_HHWWggTag_1_MoreVars',
+     #        #'GJet_Pt-20toInf_HHWWggTag_1_MoreVars',
+	    # 'GJet_Pt-40toInf_HHWWggTag_1_MoreVars',
+	    # #'QCD_Pt-30to40_HHWWggTag_1_MoreVars',
+	    # #'QCD_Pt-30toInf_HHWWggTag_1_MoreVars',
+   	 #    #'QCD_Pt-40toInf_HHWWggTag_1_MoreVars',
+	    # #'DYJetsToLL_M-50_HHWWggTag_1_MoreVars',
+	    # 'TTGG_0Jets_HHWWggTag_1_MoreVars',
+	    # 'TTGJets_TuneCP5_HHWWggTag_1_MoreVars',
+   	 #    #'TTJets_HT-600to800_HHWWggTag_1_MoreVars',
+	    # #'TTJets_HT-800to1200_HHWWggTag_1_MoreVars',
+	    # #'TTJets_HT-1200to2500_HHWWggTag_1_MoreVars',
+	    # #'TTJets_HT-2500toInf_HHWWggTag_1_MoreVars',
+	    # 'ttWJets_HHWWggTag_1_MoreVars',
+	    # 'TTJets_TuneCP5_extra_HHWWggTag_1_MoreVars',
+	    # #'W1JetsToLNu_LHEWpT_0-50_HHWWggTag_1_MoreVars',
+	    # 'W1JetsToLNu_LHEWpT_50-150_HHWWggTag_1_MoreVars',
+	    # 'W1JetsToLNu_LHEWpT_150-250_HHWWggTag_1_MoreVars',
+	    # 'W1JetsToLNu_LHEWpT_250-400_HHWWggTag_1_MoreVars',
+	    # 'W1JetsToLNu_LHEWpT_400-inf_HHWWggTag_1_MoreVars',
+	    # #'W2JetsToLNu_LHEWpT_0-50_HHWWggTag_1_MoreVars',	
+	    # 'W2JetsToLNu_LHEWpT_50-150_HHWWggTag_1_MoreVars',
+	    # 'W2JetsToLNu_LHEWpT_150-250_HHWWggTag_1_MoreVars',
+	    # 'W2JetsToLNu_LHEWpT_250-400_HHWWggTag_1_MoreVars',
+	    # 'W2JetsToLNu_LHEWpT_400-inf_HHWWggTag_1_MoreVars',
+	    # #'W3JetsToLNu_HHWWggTag_1_MoreVars',
+	    # #'W4JetsToLNu_HHWWggTag_1_MoreVars',
+	    # 'WGGJets_HHWWggTag_1_MoreVars',
+	    # 'WGJJToLNuGJJ_EWK_HHWWggTag_1_MoreVars',
+	    #'WGJJToLNu_EWK_QCD_HHWWggTag_1_MoreVars',
+	    #'WWTo1L1Nu2Q_HHWWggTag_1_MoreVars',
+	    #'WW_TuneCP5_HHWWggTag_1_MoreVars',
+            #'GluGluHToGG_HHWWggTag_1_MoreVars',
+            #'VBFHToGG_HHWWggTag_1_MoreVars',
+            #'VHToGG_HHWWggTag_1_MoreVars', 
+            #'ttHJetToGG_HHWWggTag_1_MoreVars' 
             ]
             target=0
 
         for filen in fileNames:
             if 'GluGluToHHTo2G2Qlnu_node_cHHH1_2017' in filen:
-                treename=['GluGluToHHTo2G2Qlnu_node_cHHH1_13TeV_HHWWggTag_0_v1']
+                treename=['GluGluToHHTo2G2Qlnu_node_cHHH1_13TeV_HHWWggTag_1_v1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_cHHH1_2018' in filen:
+                treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
             elif 'GluGluHToGG' in filen:
-                treename=['ggh_125_13TeV_HHWWggTag_0']
+                treename=['ggh_125_13TeV_HHWWggTag_1']
                 process_ID = 'Hgg'
             elif 'VBFHToGG' in filen:
-                treename=['vbf_125_13TeV_HHWWggTag_0']
+                treename=['vbf_125_13TeV_HHWWggTag_1']
                 process_ID = 'Hgg'
             elif 'VHToGG' in filen:
-                treename=['wzh_125_13TeV_HHWWggTag_0']
+                treename=['wzh_125_13TeV_HHWWggTag_1']
                 process_ID = 'Hgg'  
             elif 'ttHJetToGG' in filen:
-                treename=['tth_125_13TeV_HHWWggTag_0_v1']
+                treename=['tth_125_13TeV_HHWWggTag_1_v1']
                 process_ID = 'Hgg'
             elif 'DiPhotonJetsBox_M40_80' in filen:
-                treename=['DiPhotonJetsBox_M40_80_Sherpa_13TeV_HHWWggTag_0',
+                treename=['DiPhotonJetsBox_M40_80_Sherpa_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'DiPhoton'
             elif 'DiPhotonJetsBox_MGG-80toInf' in filen:
-                treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_0',
+                treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'DiPhoton'
             elif 'GJet_Pt-20to40' in filen:
-                treename=['GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_0',
+                treename=['GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'GJet'
             elif 'GJet_Pt-20toInf' in filen:
-                treename=['GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_0',
+                treename=['GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'GJet'
             elif 'GJet_Pt-40toInf' in filen:
-                treename=['GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_0',
+                treename=['GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'GJet'
             elif 'QCD_Pt-30to40' in filen:
-                treename=['QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_0',
+                treename=['QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'QCD'
             elif 'QCD_Pt-30toInf' in filen:
-                treename=['QCD_Pt_30toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_0',
+                treename=['QCD_Pt_30toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'QCD'
             elif 'QCD_Pt-40toInf' in filen:
-                treename=['QCD_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_0',
+                treename=['QCD_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'QCD'
             elif 'DYJetsToLL_M-50' in filen:
-                treename=['DYJetsToLL_M_50_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['DYJetsToLL_M_50_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'DY'
             elif 'TTGG_0Jets' in filen:
-                treename=['TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8_13TeV_HHWWggTag_0',
+                treename=['TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
             elif 'TTGJets_TuneCP5' in filen:
-                treename=['TTGJets_TuneCP5_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_0',
+                treename=['TTGJets_TuneCP5_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
             elif 'TTJets_HT-600to800' in filen:
-                treename=['TTJets_HT_600to800_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['TTJets_HT_600to800_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
             elif 'TTJets_HT-800to1200' in filen:
-                treename=['TTJets_HT_800to1200_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['TTJets_HT_800to1200_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
             elif 'TTJets_HT-1200to2500' in filen:
-                treename=['TTJets_HT_1200to2500_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['TTJets_HT_1200to2500_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
             elif 'TTJets_HT-2500toInf' in filen:
-                treename=['TTJets_HT_2500toInf_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['TTJets_HT_2500toInf_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
             elif 'ttWJets' in filen:
-                treename=['ttWJets_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['ttWJets_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
-            elif 'TTJets_TuneCP5_extra' in filen:
-                treename=['TTJets_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_0',
+            elif 'TTJets_TuneCP5' in filen:
+                treename=['TTJets_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'TTGsJets'
             elif 'W1JetsToLNu_LHEWpT_0-50' in filen:
-                treename=['W1JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W1JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W1JetsToLNu_LHEWpT_50-150' in filen:
-                treename=['W1JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W1JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W1JetsToLNu_LHEWpT_150-250' in filen:
-                treename=['W1JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W1JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W1JetsToLNu_LHEWpT_250-400' in filen:
-                treename=['W1JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W1JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W1JetsToLNu_LHEWpT_400-inf' in filen:
-                treename=['W1JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W1JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W2JetsToLNu_LHEWpT_0-50' in filen:
-                treename=['W2JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W2JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W2JetsToLNu_LHEWpT_50-150' in filen:
-                treename=['W2JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W2JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W2JetsToLNu_LHEWpT_150-250' in filen:
-                treename=['W2JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W2JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W2JetsToLNu_LHEWpT_250-400' in filen:
-                treename=['W2JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W2JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W2JetsToLNu_LHEWpT_400-inf' in filen:
-                treename=['W2JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_0',
+                treename=['W2JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W3JetsToLNu' in filen:
-                treename=['W3JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['W3JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'W4JetsToLNu' in filen:
-                treename=['W4JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['W4JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'WGGJets' in filen:
-                treename=['WGGJets_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_0',
+                treename=['WGGJets_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'WGJJToLNuGJJ_EWK' in filen:
-                treename=['WGJJToLNuGJJ_EWK_aQGC_FS_FM_TuneCP5_13TeV_madgraph_pythia8_13TeV_HHWWggTag_0',
+                treename=['WGJJToLNuGJJ_EWK_aQGC_FS_FM_TuneCP5_13TeV_madgraph_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets'
             elif 'WGJJToLNu_EWK_QCD' in filen:
-                treename=['WGJJToLNu_EWK_QCD_TuneCP5_13TeV_madgraph_pythia8_13TeV_HHWWggTag_0',
+                treename=['WGJJToLNu_EWK_QCD_TuneCP5_13TeV_madgraph_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WGsJets' 
             elif 'WWTo1L1Nu2Q' in filen:
-                treename=['WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_0',
+                treename=['WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WW'
             elif 'WW_TuneCP5' in filen:
-                treename=['WW_TuneCP5_13TeV_pythia8_13TeV_HHWWggTag_0',
+                treename=['WW_TuneCP5_13TeV_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WW'
 
@@ -284,7 +307,7 @@ def load_data(inputPath,variables,criteria):
             print("Input file: ", filename_fullpath)
             tfile = ROOT.TFile(filename_fullpath)
             for tname in treename:
-                ch_0 = tfile.Get(tname)
+                ch_0 = tfile.Get("tagsDumper/trees/"+tname)
                 if ch_0 is not None :
                     criteria_tmp = criteria 
                     #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
@@ -316,18 +339,35 @@ def load_trained_model(model_path):
     model = load_model(model_path, compile=False)
     return model
 
-def baseline_model(num_variables,learn_rate=0.001):
+def baseline_model(
+                   num_variables,
+                   optimizer='Nadam',
+                   activation='relu',
+                   dropout_rate=0.0,
+                   init_mode='glorot_normal',
+                   learn_rate=0.001
+                   ):
     model = Sequential()
-    model.add(Dense(64,input_dim=num_variables,kernel_initializer='glorot_normal',activation='relu'))
-    #model.add(Dense(64,activation='relu'))
-    model.add(Dense(32,activation='relu'))
-    model.add(Dense(16,activation='relu'))
-    model.add(Dense(8,activation='relu'))
-    model.add(Dense(4,activation='relu'))
+    model.add(Dense(64,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    #model.add(Dense(64,activation=activation))
+    model.add(Dense(32,activation=activation))
+    model.add(Dense(16,activation=activation))
+    model.add(Dense(8,activation=activation))
+    model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
     #model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
-    optimizer=Nadam(lr=learn_rate)
-    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
+    #optimizer=Nadam(lr=learn_rate)
+    #model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
+    if optimizer=='Adam':
+        model.compile(loss='binary_crossentropy',optimizer=Adam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Nadam':
+        model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adamax':
+        model.compile(loss='binary_crossentropy',optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adadelta':
+        model.compile(loss='binary_crossentropy',optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adagrad':
+        model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
     return model
 
 def gscv_model(learn_rate=0.001):
@@ -371,6 +411,7 @@ def main():
 
     usage = 'usage: %prog [options]'
     parser = argparse.ArgumentParser(usage)
+    parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
     parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
     parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
     parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
@@ -381,7 +422,8 @@ def main():
 
     # Create instance of the input files directory
     #inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
-    inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
+    #inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
+    inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
@@ -432,7 +474,12 @@ def main():
     # Load ttree into .csv including all variables listed in column_headers
     print('<train-DNN> Input file path: ', inputs_file_path)
     outputdataframe_name = '%s/output_dataframe.csv' %(output_directory)
-    if os.path.isfile(outputdataframe_name):
+    if os.path.isfile(outputdataframe_name) and (args.load_dataset == 0):
+        """Load dataset or not
+
+        If one changes the input training variables then we have to reload dataset.
+        Don't use the previous .csv file if you update the list of input variables.
+        """
         data = pandas.read_csv(outputdataframe_name)
         print('<train-DNN> Loading data .csv from: %s . . . . ' % (outputdataframe_name))
     else:
@@ -631,12 +678,17 @@ def main():
             early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=1)
             #model = baseline_model(num_variables, learn_rate=learn_rate)
             model = new_model(num_variables, learn_rate=learn_rate)
+            
+            # Tensorboard
+            logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+            tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
             # Fit the model
             # Batch size = examples before updating weights (larger = faster training)
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
-            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor])
+            #history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor])
+            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
             # Make plot of loss function evolution
@@ -655,10 +707,13 @@ def main():
     # Node probabilities for training sample events
     result_probs = model.predict(np.array(X_train))
     result_classes = model.predict_classes(np.array(X_train))
+    # model.predict_classes is going to be deprecated.. so one should use np.argmax
+    # result_classes = np.argmax(model.predict(np.array(X_train)), axis=-1)
 
     # Node probabilities for testing sample events
     result_probs_test = model.predict(np.array(X_test))
     result_classes_test = model.predict_classes(np.array(X_test))
+    # result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
 
     # Store model in file
     model_output_name = os.path.join(output_directory,'model.h5')
@@ -670,8 +725,8 @@ def main():
     with open(model_json_name,'w') as json_file:
         json_file.write(model_json)
     model.summary()
-    model_schematic_name = os.path.join(output_directory,'model_schematic.png')
-    #plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
+    model_schematic_name = os.path.join(output_directory,'model_schematic.eps')
+    plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
 
     print('================')
     print('Training event labels: ', len(Y_train))
@@ -686,8 +741,41 @@ def main():
     Plotter.plots_directory = plots_dir
     Plotter.output_directory = output_directory
 
+    # Make overfitting plots of output nodes
+    Plotter.binary_overfitting(model, Y_train, Y_test, result_probs, result_probs_test, plots_dir, train_weights, test_weights)
+
     Plotter.ROC(model, X_test, Y_test, X_train, Y_train)
     Plotter.save_plots(dir=plots_dir, filename='ROC.png')
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
+
+    #e = shap.DeepExplainer(model, X_train[:400, ])
+    #shap_values = e.shap_values(X_test[:400, ])
+    #Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    #Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+
+    #e = shap.GradientExplainer(model, X_train[:100, ])
+    #shap_values = e.shap_values(X_test[:100, ])
+    #Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
+    #e = shap.KernelExplainer(model.predict, X_train[:100, ])
+    #shap_values = e.shap_values(X_test[:100, ])
+    #Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:100, ],shap_values=shap_values, column_headers=column_headers)
+    #Plotter.plot_dot_bar(title="KernelExplainer_Bar_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
+    #Plotter.plot_dot_bar_all(title="KernelExplainer_bar_All_Var_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
+
+    # Create confusion matrices for training and testing performance
+    # Plotter.conf_matrix(original_encoded_train_Y,result_classes_train,train_weights,'index')
+    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_confusion_matrix_TRAIN.png')
+    # Plotter.conf_matrix(original_encoded_test_Y,result_classes_test,test_weights,'index')
+    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_confusion_matrix_TEST.png')
+
+    # Plotter.conf_matrix(original_encoded_train_Y,result_classes_train,train_weights,'columns')
+    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_columns_confusion_matrix_TRAIN.png')
+    # Plotter.conf_matrix(original_encoded_test_Y,result_classes_test,test_weights,'columns')
+    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_columns_confusion_matrix_TEST.png')
+
+    # Plotter.conf_matrix(original_encoded_train_Y,result_classes_train,train_weights,'')
+    # Plotter.save_plots(dir=plots_dir, filename='yields_matrix_TRAIN.png')
+    # Plotter.conf_matrix(original_encoded_test_Y,result_classes_test,test_weights,'')
+    # Plotter.save_plots(dir=plots_dir, filename='yields_matrix_TEST.png')
 
 main()
