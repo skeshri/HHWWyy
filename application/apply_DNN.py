@@ -62,10 +62,10 @@ class apply_DNN(object):
 
     def load_data(self, inputPath, variables, criteria, process):
         my_cols_list=variables
-        print '\n\nmy_cols_list: \n',my_cols_list,'\n\n'
+        # print '\n\nmy_cols_list: \n',my_cols_list,'\n\n'
         data = pd.DataFrame(columns=my_cols_list)
-        print "my_cols_list[:-1]: \n",my_cols_list[:-1]
-        print "my_cols_list[:-2]: \n",my_cols_list[:-2]
+        # print "my_cols_list[:-1]: \n",my_cols_list[:-1]
+        # print "my_cols_list[:-2]: \n",my_cols_list[:-2]
         if 'GluGluToHHTo2G4Q_node_cHHH1_2018' in process:
             print "Signal..."
             sampleNames=process

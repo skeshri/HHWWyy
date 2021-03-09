@@ -100,10 +100,10 @@ def main():
 
     training_columns = column_headers[:-2]
     num_variables = len(training_columns)
-    print "column_headers: ",column_headers
-    print "len(column_headers): ",len(column_headers)
-    print "training_columns: ",training_columns
-    print "len(training_columns): ",len(training_columns)
+    # print "column_headers: ",column_headers
+    # print "len(column_headers): ",len(column_headers)
+    # print "training_columns: ",training_columns
+    # print "len(training_columns): ",len(training_columns)
 
     # Load trained model
     model_name_1 = os.path.join('../',modeldir,'model.h5')
@@ -166,11 +166,11 @@ def main():
         # Create dataset from dataframe to evaluate DNN
         print "training_columns.shape: ",len(training_columns)
         X_test = data[training_columns].values
-        print "X_test.shape:\n",X_test.shape
-        print "X_test:\n",X_test
+        # print "X_test.shape:\n",X_test.shape
+        # print "X_test:\n",X_test
         result_probs_ = model_1.predict(np.array(X_test))
-        print "result_probs_:\n",result_probs_
-        print(data)
+        # print "result_probs_:\n",result_probs_
+        # print(data)
         nEvent = data['event']
 
 
@@ -187,10 +187,10 @@ def main():
             # print 'nEvent= %s , prob = %s' % (nEvent[index], result_probs_[index])
             eventnum_resultsprob_dict[nEvent[index]] = result_probs_[index]
             model1_probs_.append(result_probs_[index])
-        print "="*51
-        print "eventnum_resultsprob_dict:"
-        print eventnum_resultsprob_dict
-        print "="*51
+        # print "="*51
+        # print "eventnum_resultsprob_dict:"
+        # print eventnum_resultsprob_dict
+        # print "="*51
 
         print(current_sample_name)
         infile = inputs_file_path+current_sample_name+".root"
@@ -367,12 +367,12 @@ def main():
                     # print "\tRam eventnum_resultsprob_dict.get(Eventnum_)[0]",eventnum_resultsprob_dict.get(Eventnum_)[0]
                     # print "\teventnum_resultsprob_dict.get(Eventnum_)[0]",eventnum_resultsprob_dict.get(Eventnum_)[0]
                     EventWeights_.append(EventWeight_)
-                    histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)# DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
+                    histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)
                     DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
-                    output_tree.Fill()
+                output_tree.Fill()
 
                 # EventWeights_.append(EventWeight_)
-                # histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)# DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
+                # histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)
                 # DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
                 # output_tree.Fill()
         eventnum_resultsprob_dict.clear()

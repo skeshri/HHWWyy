@@ -68,12 +68,20 @@ def load_data_from_EOS(self, directory, mask='', prepend='root://eosuser.cern.ch
     return
 
 def load_data(inputPath,variables,criteria):
-    # Load dataset to .csv format file
+    """
+    Load data from .root file into a pandas dataframe and return it.
+    
+    :param      inputPath:  Path of input root files
+    :type       inputPath:  String
+    :param      variables:  List of all input variables that need to read from input root files
+    :type       variables:  list
+    :param      criteria:   Selection cuts
+    :type       criteria:   String
+    """
     my_cols_list=variables
-    print "my_cols_list: ",my_cols_list
+    print "Variable list: ",my_cols_list
     data = pd.DataFrame(columns=my_cols_list)
     keys=['HH','bckg']
-    data = pd.DataFrame(columns=my_cols_list)
     for key in keys :
         print('key: ', key)
         if 'HH' in key:
@@ -81,21 +89,18 @@ def load_data(inputPath,variables,criteria):
             subdir_name = 'Signal'
             fileNames = [
             'GluGluToHHTo2G4Q_node_cHHH1_2018'
-            # 'GluGluToHHTo2G2Qlnu_node_cHHH1_2017_HHWWggTag_1_odd_MoreVars',
-            #'GluGluToHHTo2G2Qlnu_node_cHHH1_2017_HHWWggTag_1_even_MoreVars'
             ]
             target=1
         else:
             sampleNames = key
             subdir_name = 'Backgrounds'
             fileNames = [
-
+                # FH File Names
                 'DiPhotonJetsBox_M40_80',
                 'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
                 'DiPhotonJetsBox_MGG-80toInf_13TeV',
                 'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
                 'DYJetsToLL_M-50_TuneCP5_13TeV',
-                # 'THQ_ctcvcp_HToGG_M125_13TeV',
                 'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
                 'TTGG_0Jets_TuneCP5_13TeV',
                 'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
@@ -103,46 +108,11 @@ def load_data(inputPath,variables,criteria):
                 'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
                 'TTJets_TuneCP5_13TeV',
                 'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                'WW_TuneCP5_13TeV-pythia8'
-
-            #'DiPhotonJetsBox_M40_80_HHWWggTag_1_MoreVars',
-	    # 'DiPhotonJetsBox_MGG-80toInf_HHWWggTag_1_MoreVars',
-	    # #'GJet_Pt-20to40_HHWWggTag_1_MoreVars',
-     #        #'GJet_Pt-20toInf_HHWWggTag_1_MoreVars',
-	    # 'GJet_Pt-40toInf_HHWWggTag_1_MoreVars',
-	    # #'QCD_Pt-30to40_HHWWggTag_1_MoreVars',
-	    # #'QCD_Pt-30toInf_HHWWggTag_1_MoreVars',
-   	 #    #'QCD_Pt-40toInf_HHWWggTag_1_MoreVars',
-	    # #'DYJetsToLL_M-50_HHWWggTag_1_MoreVars',
-	    # 'TTGG_0Jets_HHWWggTag_1_MoreVars',
-	    # 'TTGJets_TuneCP5_HHWWggTag_1_MoreVars',
-   	 #    #'TTJets_HT-600to800_HHWWggTag_1_MoreVars',
-	    # #'TTJets_HT-800to1200_HHWWggTag_1_MoreVars',
-	    # #'TTJets_HT-1200to2500_HHWWggTag_1_MoreVars',
-	    # #'TTJets_HT-2500toInf_HHWWggTag_1_MoreVars',
-	    # 'ttWJets_HHWWggTag_1_MoreVars',
-	    # 'TTJets_TuneCP5_extra_HHWWggTag_1_MoreVars',
-	    # #'W1JetsToLNu_LHEWpT_0-50_HHWWggTag_1_MoreVars',
-	    # 'W1JetsToLNu_LHEWpT_50-150_HHWWggTag_1_MoreVars',
-	    # 'W1JetsToLNu_LHEWpT_150-250_HHWWggTag_1_MoreVars',
-	    # 'W1JetsToLNu_LHEWpT_250-400_HHWWggTag_1_MoreVars',
-	    # 'W1JetsToLNu_LHEWpT_400-inf_HHWWggTag_1_MoreVars',
-	    # #'W2JetsToLNu_LHEWpT_0-50_HHWWggTag_1_MoreVars',	
-	    # 'W2JetsToLNu_LHEWpT_50-150_HHWWggTag_1_MoreVars',
-	    # 'W2JetsToLNu_LHEWpT_150-250_HHWWggTag_1_MoreVars',
-	    # 'W2JetsToLNu_LHEWpT_250-400_HHWWggTag_1_MoreVars',
-	    # 'W2JetsToLNu_LHEWpT_400-inf_HHWWggTag_1_MoreVars',
-	    # #'W3JetsToLNu_HHWWggTag_1_MoreVars',
-	    # #'W4JetsToLNu_HHWWggTag_1_MoreVars',
-	    # 'WGGJets_HHWWggTag_1_MoreVars',
-	    # 'WGJJToLNuGJJ_EWK_HHWWggTag_1_MoreVars',
-	    #'WGJJToLNu_EWK_QCD_HHWWggTag_1_MoreVars',
-	    #'WWTo1L1Nu2Q_HHWWggTag_1_MoreVars',
-	    #'WW_TuneCP5_HHWWggTag_1_MoreVars',
-            #'GluGluHToGG_HHWWggTag_1_MoreVars',
-            #'VBFHToGG_HHWWggTag_1_MoreVars',
-            #'VHToGG_HHWWggTag_1_MoreVars', 
-            #'ttHJetToGG_HHWWggTag_1_MoreVars' 
+                'WW_TuneCP5_13TeV-pythia8',
+                'ttHJetToGG_M125_13TeV',
+                'VBFHToGG_M125_13TeV',
+                'GluGluHToGG_M125_TuneCP5_13TeV',
+                'VHToGG_M125_13TeV'
             ]
             target=0
 
@@ -163,7 +133,7 @@ def load_data(inputPath,variables,criteria):
                 treename=['wzh_125_13TeV_HHWWggTag_1']
                 process_ID = 'Hgg'  
             elif 'ttHJetToGG' in filen:
-                treename=['tth_125_13TeV_HHWWggTag_1_v1']
+                treename=['tth_125_13TeV_HHWWggTag_1']
                 process_ID = 'Hgg'
             elif 'DiPhotonJetsBox_M40_80' in filen:
                 treename=['DiPhotonJetsBox_M40_80_Sherpa_13TeV_HHWWggTag_1',
@@ -382,7 +352,15 @@ def gscv_model(learn_rate=0.001):
     model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
     return model
 
-def new_model(num_variables,learn_rate=0.001):
+def new_model(
+               num_variables,
+               optimizer='Nadam',
+               activation='relu',
+               loss='binary_crossentropy',
+               dropout_rate=0.0,
+               init_mode='glorot_normal',
+               learn_rate=0.001
+               ):
     model = Sequential()
     model.add(Dense(10, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
     model.add(BatchNormalization())
@@ -398,7 +376,7 @@ def new_model(num_variables,learn_rate=0.001):
     model.add(Activation('relu'))
     model.add(Dense(1, activation="sigmoid")) 
     optimizer=Nadam(lr=learn_rate)
-    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
+    model.compile(loss=loss,optimizer=optimizer,metrics=['acc'])
     return model
 
 def check_dir(dir):
