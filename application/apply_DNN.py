@@ -28,7 +28,7 @@ from keras.callbacks import EarlyStopping
 from root_numpy import root2array, tree2array
 
 # python looks here for its packages: $PYTHONPATH. Need to add path to $PYTHONPATH so python can find the required packages.
-sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_10_6_8/src/HHWWyy/')
+sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
 from plotting.plotter import plotter
 
 class apply_DNN(object):

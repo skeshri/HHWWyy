@@ -55,6 +55,7 @@ from plotting.plotter import plotter
 from numpy.testing import assert_allclose
 from keras.callbacks import ModelCheckpoint
 from root_numpy import root2array, tree2array
+# import pydotplus as pydot
 
 seed = 7
 np.random.seed(7)
@@ -665,8 +666,8 @@ def main():
             # Batch size = examples before updating weights (larger = faster training)
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
-            #history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor])
-            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
+            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor])
+            # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
             # Make plot of loss function evolution
@@ -703,8 +704,8 @@ def main():
     with open(model_json_name,'w') as json_file:
         json_file.write(model_json)
     model.summary()
-    model_schematic_name = os.path.join(output_directory,'model_schematic.eps')
-    plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
+    # model_schematic_name = os.path.join(output_directory,'model_schematic.eps')
+    # plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
 
     print('================')
     print('Training event labels: ', len(Y_train))

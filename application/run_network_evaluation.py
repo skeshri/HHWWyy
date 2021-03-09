@@ -9,7 +9,7 @@ import ROOT
 import sys
 from keras.models import load_model
 from array import array
-sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_10_6_8/src/HHWWyy/')
+sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
 from plotting.plotter import plotter
 from ROOT import TFile, TTree, gDirectory, gPad
 from sklearn.preprocessing import LabelEncoder
@@ -57,44 +57,22 @@ def main():
     process_filename = {
     # 'HHWWgg' : ('HHWWgg-SL-SM-NLO-2017'),
     'HHWWgg' : ('GluGluToHHTo2G4Q_node_cHHH1_2018'),
-    'DYJetsToLL_M-50': ('DYJetsToLL_M-50_TuneCP5_13TeV'),
     'DiPhoton':  ('DiPhotonJetsBox_MGG-80toInf_13TeV'),
+    'QCD_Pt_30to40': ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+    'QCD_Pt_40toInf': ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    'GJet_Pt_20to40': ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+    'GJet_Pt_40toInf': ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    'TTGG': ('TTGG_0Jets_TuneCP5_13TeV'),
+    'TTGJets': ('TTGJets_TuneCP5_13TeV'),
+    'TTJets': ('TTJets_TuneCP5_13TeV'),
+    'DYJetsToLL_M50': ('DYJetsToLL_M-50_TuneCP5_13TeV'),
+    'WW_TuneCP5_13TeV': ('WW_TuneCP5_13TeV-pythia8'),
+    'ttHJetToGG_M125_13TeV': ('ttHJetToGG_M125_13TeV'),
+    'VBFHToGG_M125_13TeV': ('VBFHToGG_M125_13TeV'),
+    'GluGluHToGG_M125_TuneCP5_13TeV': ('GluGluHToGG_M125_TuneCP5_13TeV'),
+    'VHToGG_M125_13TeV': ('VHToGG_M125_13TeV')
 
-    # 'TTGG_0Jets_TuneCP5_13TeV': ('TTGG_0Jets_TuneCP5_13TeV'),
-    # 'TTGJets_TuneCP5_13TeV':    ('TTGJets_TuneCP5_13TeV'),
-    # 'TTJets_TuneCP5_13TeV': ('TTJets_TuneCP5_13TeV'),
-    # 'WW_TuneCP5_13TeV': ('WW_TuneCP5_13TeV-pythia8',   ),
-    # 'QCD_Pt':   ('QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV'),
-    # 'QCD_Pt':   ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
-    # 'GJet_Pt':  ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
-    # 'GJet_Pt':  ('GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV'),
-    # 'GJet_Pt':  ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
-    # 'QCD_Pt':   ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
-
-    # 'DiPhoton' : ('DiPhotonJetsBox_MGG-80toInf_13TeV-Sherpa_Hadded'),
-    'GJet_Pt-20toInf' : ('GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV_Pythia8_Hadded'),
-    'GJet_Pt-20to40' : ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV_Pythia8_Hadded'),
-    'GJet_Pt-40toInf' : ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV_Pythia8_Hadded') ,
-    # 'DYJetsToLL_M-50' : ('DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8_Hadded'),
-    'TTGJets' : ('TTGJets_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_Hadded'),
-    'TTGG' : ('TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8_Hadded'),
-    'TTJets_HT-600to800' : ('TTJets_HT-600to800_TuneCP5_13TeV-madgraphMLM-pythia8_Hadded'),
-    'TTJets_HT-800to1200' : ('TTJets_HT-800to1200_TuneCP5_13TeV-madgraphMLM-pythia8_Hadded'),
-    'TTJets_HT-1200to2500' : ('TTJets_HT-1200to2500_TuneCP5_13TeV-madgraphMLM-pythia8_Hadded'),
-    'TTJets_HT-2500toInf' : ('TTJets_HT-2500toInf_TuneCP5_13TeV-madgraphMLM-pythia8_Hadded'),
-    'W1JetsToLNu_LHEWpT_0-50' : ('W1JetsToLNu_LHEWpT_0-50_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W1JetsToLNu_LHEWpT_50-150' : ('W1JetsToLNu_LHEWpT_50-150_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W1JetsToLNu_LHEWpT_150-250' : ('W1JetsToLNu_LHEWpT_150-250_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W1JetsToLNu_LHEWpT_250-400' : ('W1JetsToLNu_LHEWpT_250-400_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W1JetsToLNu_LHEWpT_400-inf' : ('W1JetsToLNu_LHEWpT_400-inf_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W2JetsToLNu_LHEWpT_0-50' : ('W2JetsToLNu_LHEWpT_0-50_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W2JetsToLNu_LHEWpT_50-150' : ('W2JetsToLNu_LHEWpT_50-150_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W2JetsToLNu_LHEWpT_150-250' : ('W2JetsToLNu_LHEWpT_150-250_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W2JetsToLNu_LHEWpT_250-400' : ('W2JetsToLNu_LHEWpT_250-400_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W2JetsToLNu_LHEWpT_400-inf' : ('W2JetsToLNu_LHEWpT_400-inf_TuneCP5_13TeV-amcnloFXFX-pythia8_Hadded'),
-    'W3JetsToLNu' : ('W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8_Hadded'),
-    'W4JetsToLNu' : ('W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8_Hadded'),
-    'ttHJetToGG' : ('ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8_Hadded')
+    # 'ttHJetToGG' : ('ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8_Hadded')
     #'Data' : ('Data_'+JESname+region)
     }
 
@@ -145,7 +123,7 @@ def main():
             data = pandas.read_csv(dataframe_name)
         else:
             print('<run_network_evaluation> Making *new* data file from %s . . . . ' % (inputs_file_path))
-            selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 1/3 ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 1/4 ) )'
+            selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. ) )'
             # selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 0.35 ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 0.25 ) && passbVeto==1 && ExOneLep==1 && N_goodJets>=1 )'
             data = DNN_applier.load_data(inputs_file_path,column_headers,selection_criteria,current_sample_name)
             if len(data) == 0 :
@@ -204,6 +182,22 @@ def main():
             treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in current_sample_name:
             treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
+        elif 'QCD_Pt-30to40' in current_sample_name:
+            treename = [
+                'QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'QCD_Pt-40toInf' in current_sample_name:
+            treename = [
+                'QCD_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'GJet_Pt-20to40' in current_sample_name:
+            treename = [
+                'GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'GJet_Pt-40toInf' in current_sample_name:
+            treename = [
+                'GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
+            ]
         elif 'GJet_Pt-20toInf' in current_sample_name:
             treename = [
             'GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8'
@@ -215,14 +209,22 @@ def main():
         elif 'GJet_Pt-40toInf' in current_sample_name:
             treename=['GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8'
             ]
-        elif 'DYJetsToLL_M-50_TuneCP5' in current_sample_name:
-            treename=['DYJetsToLL_M_50_TuneCP5_13TeV_amcatnloFXFX_pythia8'
+        elif 'DYJetsToLL_M-50' in current_sample_name:
+            treename=['DYJetsToLL_M_50_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'WW_TuneCP5_13TeV' in current_sample_name:
+            treename = [
+                'WW_TuneCP5_13TeV_pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'TTGG' in current_sample_name:
-            treename=['TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8'
+            treename=['TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'TTGJets' in current_sample_name:
-            treename=['TTGJets_TuneCP5_13TeV_amcatnloFXFX_madspin_pythia8'
+            treename=['TTGJets_TuneCP5_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'TTJets_TuneCP5' in current_sample_name:
+            treename=[
+                'TTJets_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'TTJets_HT-600to800' in current_sample_name:
             treename=['TTJets_HT_600to800_TuneCP5_13TeV_madgraphMLM_pythia8'
@@ -273,7 +275,19 @@ def main():
             treename=['W4JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8'
             ]
         elif 'ttHJetToGG' in current_sample_name:
-            treename=['ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8'
+            treename=['tth_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'VBFHToGG' in current_sample_name:
+            treename = [
+                'vbf_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'GluGluHToGG' in current_sample_name:
+            treename = [
+                'ggh_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'VHToGG' in current_sample_name:
+            treename = [
+                'wzh_125_13TeV_HHWWggTag_1'
             ]
         else:
             print('<run_network_evaluation> Warning: Process name not recognised. Exiting.',current_sample_name)
@@ -348,7 +362,7 @@ def main():
                 N_goodJets = data_tree.N_goodJets
 
                 # if ( (Leading_Photon_pt/CMS_hgg_mass)>0.35 and (Subleading_Photon_pt/CMS_hgg_mass)>0.25 and passbVeto==1 and ExOneLep==1 and N_goodJets>=1):
-                if ( (Leading_Photon_pt/CMS_hgg_mass)>1/3 and (Subleading_Photon_pt/CMS_hgg_mass)>1/4):
+                if ( (Leading_Photon_pt/CMS_hgg_mass)>1/3. and (Subleading_Photon_pt/CMS_hgg_mass)>1/4.):
                     pass_selection = 1
                 else:
                     pass_selection = 0
@@ -361,20 +375,10 @@ def main():
                 else:
                     true_process.append(0)
 
-                # print "EventWeight_ = ",EventWeight_,"\tEventnum_    = ",Eventnum_
-                # print "\teventnum_resultsprob_dict.get(Eventnum_)[0]",type(eventnum_resultsprob_dict.get(Eventnum_))
-                if (eventnum_resultsprob_dict.get(Eventnum_) != None): 
-                    # print "\tRam eventnum_resultsprob_dict.get(Eventnum_)[0]",eventnum_resultsprob_dict.get(Eventnum_)[0]
-                    # print "\teventnum_resultsprob_dict.get(Eventnum_)[0]",eventnum_resultsprob_dict.get(Eventnum_)[0]
-                    EventWeights_.append(EventWeight_)
-                    histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)
-                    DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
+                EventWeights_.append(EventWeight_)
+                histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)
+                DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
                 output_tree.Fill()
-
-                # EventWeights_.append(EventWeight_)
-                # histo_DNN_values.Fill(eventnum_resultsprob_dict.get(Eventnum_)[0] , EventWeight_)
-                # DNN_evaluation[0] = eventnum_resultsprob_dict.get(Eventnum_)[0]
-                # output_tree.Fill()
         eventnum_resultsprob_dict.clear()
         output_file.Write()
         output_file.Close()
