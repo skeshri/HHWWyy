@@ -116,17 +116,17 @@ def load_data(inputPath,variables,criteria):
             fileNames = [
                 # FH File Names
                 'DiPhotonJetsBox_M40_80',
-                'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
                 'DiPhotonJetsBox_MGG-80toInf_13TeV',
-                'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
-                'DYJetsToLL_M-50_TuneCP5_13TeV',
-                'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                'TTGG_0Jets_TuneCP5_13TeV',
-                'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                'TTGJets_TuneCP5_13TeV',
-                'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
-                'TTJets_TuneCP5_13TeV',
+                'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
                 'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
+                'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                'TTGG_0Jets_TuneCP5_13TeV',
+                'TTGJets_TuneCP5_13TeV',
+                'TTJets_TuneCP5_13TeV',
+                'DYJetsToLL_M-50_TuneCP5_13TeV',
                 'WW_TuneCP5_13TeV-pythia8',
                 'ttHJetToGG_M125_13TeV',
                 'VBFHToGG_M125_13TeV',
@@ -462,7 +462,7 @@ def main():
     # Create plots subdirectory
     plots_dir = os.path.join(output_directory,'plots/')
     input_var_jsonFile = open('input_variables.json','r')
-    selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3 && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4 )'
+    selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. )'
 
     # Load Variables from .json
     variable_list = json.load(input_var_jsonFile,encoding="utf-8").items()
