@@ -55,11 +55,29 @@ from plotting.plotter import plotter
 from numpy.testing import assert_allclose
 from keras.callbacks import ModelCheckpoint
 from root_numpy import root2array, tree2array
+from datetime import datetime
 # import pydotplus as pydot
 
 seed = 7
 np.random.seed(7)
 rng = np.random.RandomState(31337)
+CURRENT_DATETIME = datetime.now()
+
+def GenerateGitPatchAndLog(logFileName,GitPatchName):
+    CMSSWDirPath = os.environ['CMSSW_BASE']
+    CMSSWRel = CMSSWDirPath.split("/")[-1]
+
+    os.system('git diff > '+GitPatchName)
+
+    outScript = open(logFileName,"w");
+    outScript.write('\nCMSSW Version used: '+CMSSWRel+'\n')
+    outScript.write('\nCurrent directory path: '+CMSSWDirPath+'\n')
+    outScript.close()
+
+    os.system('echo -e "\n\n============\n== Latest commit summary \n\n" >> '+logFileName )
+    os.system("git log -1 --pretty=tformat:' Commit: %h %n Date: %ad %n Relative time: %ar %n Commit Message: %s' >> "+logFileName )
+    os.system('echo -e "\n\n============\n" >> '+logFileName )
+    os.system('git log -1 --format="SHA: %H" >> '+logFileName )
 
 def load_data_from_EOS(self, directory, mask='', prepend='root://eosuser.cern.ch'):
     eos_dir = '/eos/user/%s ' % (directory)
@@ -424,6 +442,16 @@ def main():
     # Create instance of output directory where all results are saved.
     output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
     check_dir(output_directory)
+    """
+    Before we start save git patch. This will be helpful in debug the code later or taking care of the differences between many traning directory.
+    """
+    LogdirName= "gitLog_"+(str(CURRENT_DATETIME.year)[-2:]
+              +str(format(CURRENT_DATETIME.month,'02d'))
+              +str(format(CURRENT_DATETIME.day,'02d'))
+              )
+    GenerateGitPatchAndLog(LogdirName+".log",LogdirName+".patch")
+    os.system('mv '+LogdirName+".log "+LogdirName+".patch "+output_directory)
+
     hyperparam_file = os.path.join(output_directory,'additional_model_hyper_params.txt')
     additional_hyperparams = open(hyperparam_file,'w')
     additional_hyperparams.write("optimizer: "+optimizer+"\n")

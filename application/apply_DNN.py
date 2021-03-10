@@ -85,101 +85,117 @@ class apply_DNN(object):
             treename=[
             'GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1',
             ]
+        elif 'GluGluToHHTo2G4Q' in process:
+            treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in process:
-            treename=[
-            'DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1',
-            ]
-        elif 'GJet_Pt-20toInf' in process:
+            treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
+        elif 'QCD_Pt-30to40' in process:
             treename = [
-            'GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8',
+                'QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'QCD_Pt-40toInf' in process:
+            print "DEBUG: QCD_Pt-40toInf"
+            treename = [
+                'QCD_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'GJet_Pt-20to40' in process:
             treename = [
-            'GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8',
+                'GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'GJet_Pt-40toInf' in process:
-            treename=[
-            'GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8',
+            treename = [
+                'GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
             ]
-        elif 'DYJetsToLL_M-50_TuneCP5' in process:
-            treename=[
-            'DYJetsToLL_M_50_TuneCP5_13TeV_amcatnloFXFX_pythia8',
+        elif 'GJet_Pt-20toInf' in process:
+            treename = [
+            'GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8'
+            ]
+        elif 'GJet_Pt-20to40' in process:
+            treename = [
+            'GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8'
+            ]
+        elif 'GJet_Pt-40toInf' in process:
+            treename=['GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8'
+            ]
+        elif 'DYJetsToLL_M-50' in process:
+            treename=['DYJetsToLL_M_50_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'WW_TuneCP5_13TeV' in process:
+            treename = [
+                'WW_TuneCP5_13TeV_pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'TTGG' in process:
-            treename=[
-            'TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8',
+            treename=['TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'TTGJets' in process:
+            treename=['TTGJets_TuneCP5_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_1'
+            ]
+        elif 'TTJets_TuneCP5' in process:
             treename=[
-            'TTGJets_TuneCP5_13TeV_amcatnloFXFX_madspin_pythia8',
+                'TTJets_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'TTJets_HT-600to800' in process:
-            treename=[
-            'TTJets_HT_600to800_TuneCP5_13TeV_madgraphMLM_pythia8',
+            treename=['TTJets_HT_600to800_TuneCP5_13TeV_madgraphMLM_pythia8'
             ]
         elif 'TTJets_HT-800to1200' in process:
-            treename=[
-            'TTJets_HT_800to1200_TuneCP5_13TeV_madgraphMLM_pythia8',
+            treename=['TTJets_HT_800to1200_TuneCP5_13TeV_madgraphMLM_pythia8'
             ]
         elif 'TTJets_HT-1200to2500' in process:
-            treename=[
-            'TTJets_HT_1200to2500_TuneCP5_13TeV_madgraphMLM_pythia8',
+            treename=['TTJets_HT_1200to2500_TuneCP5_13TeV_madgraphMLM_pythia8'
             ]
         elif 'TTJets_HT-2500toInf' in process:
-            treename=[
-            'TTJets_HT_2500toInf_TuneCP5_13TeV_madgraphMLM_pythia8',
+            treename=['TTJets_HT_2500toInf_TuneCP5_13TeV_madgraphMLM_pythia8'
             ]
         elif 'W1JetsToLNu_LHEWpT_0-50' in process:
-            treename=[
-            'W1JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W1JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W1JetsToLNu_LHEWpT_50-150' in process:
-            treename=[
-            'W1JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W1JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W1JetsToLNu_LHEWpT_150-250' in process:
-            treename=[
-            'W1JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W1JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W1JetsToLNu_LHEWpT_250-400' in process:
-            treename=[
-            'W1JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W1JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W1JetsToLNu_LHEWpT_400-inf' in process:
-            treename=[
-            'W1JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W1JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W2JetsToLNu_LHEWpT_0-50' in process:
-            treename=[
-            'W2JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W2JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W2JetsToLNu_LHEWpT_50-150' in process:
-            treename=[
-            'W2JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W2JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W2JetsToLNu_LHEWpT_150-250' in process:
-            treename=[
-            'W2JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W2JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W2JetsToLNu_LHEWpT_250-400' in process:
-            treename=[
-            'W2JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W2JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W2JetsToLNu_LHEWpT_400-inf' in process:
-            treename=[
-            'W2JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8',
+            treename=['W2JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8'
             ]
         elif 'W3JetsToLNu' in process:
-            treename=[
-            'W3JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8',
+            treename=['W3JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8'
             ]
         elif 'W4JetsToLNu' in process:
-            treename=[
-            'W4JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8',
+            treename=['W4JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8'
             ]
         elif 'ttHJetToGG' in process:
-            treename=[
-            'ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8',
+            treename=['tth_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'VBFHToGG' in process:
+            treename = [
+                'vbf_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'GluGluHToGG' in process:
+            treename = [
+                'ggh_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'VHToGG' in process:
+            treename = [
+                'wzh_125_13TeV_HHWWggTag_1'
             ]
 
         filename_fullpath = inputPath+"/"+process+".root"
