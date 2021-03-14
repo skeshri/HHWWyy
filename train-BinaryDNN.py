@@ -337,11 +337,11 @@ def baseline_model(
                    learn_rate=0.001
                    ):
     model = Sequential()
-    model.add(Dense(64,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     #model.add(Dense(64,activation=activation))
-    model.add(Dense(32,activation=activation))
-    model.add(Dense(16,activation=activation))
-    model.add(Dense(8,activation=activation))
+    model.add(Dense(10,activation=activation))
+    # model.add(Dense(16,activation=activation))
+    # model.add(Dense(8,activation=activation))
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
     #model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
@@ -385,8 +385,8 @@ def new_model(
     model.add(BatchNormalization())
     model.add(Activation('relu'))
     #model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
-    #model.add(BatchNormalization())
-    #model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
     model.add(Dense(10))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
@@ -683,8 +683,8 @@ def main():
         else:
             # Define model for analysis
             early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=1)
-            #model = baseline_model(num_variables, learn_rate=learn_rate)
-            model = new_model(num_variables, learn_rate=learn_rate)
+            model = baseline_model(num_variables, learn_rate=learn_rate)
+            # model = new_model(num_variables, learn_rate=learn_rate)
             
             # Tensorboard
             logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
