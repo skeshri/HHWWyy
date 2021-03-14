@@ -1,5 +1,5 @@
 import numpy as np
-#import shap
+import shap
 import pandas
 import os
 import sklearn
@@ -86,9 +86,9 @@ class plotter(object):
 
         y_pred_keras_train = model.predict(X_train).ravel()
         fpr_keras_train, tpr_keras_train, thresholds_keras_train = roc_curve(Y_train, y_pred_keras_train)
-        auc_keras_train = auc(fpr_keras_train, tpr_keras_train) 
-        
-        self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10)) 
+        auc_keras_train = auc(fpr_keras_train, tpr_keras_train)
+
+        self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10))
         plt.plot([0, 1], [0, 1], 'k--')
         plt.plot(fpr_keras_test, tpr_keras_test, label='Test (area = {:.3f})'.format(auc_keras_test))
         plt.plot(fpr_keras_train, tpr_keras_train, label='Train (area = {:.3f})'.format(auc_keras_train))
@@ -101,7 +101,7 @@ class plotter(object):
         return
 
     def history_plot(self, history, label='accuracy'):
-        self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10)) 
+        self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10))
         plt.plot(history.history[label])
         plt.plot(history.history['val_'+label])
         plt.title('model '+label)
@@ -898,7 +898,7 @@ DY & %s \\ \hline
         if x is None:
           print('<plotter> No x defined. Leaving class function')
           return
-        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False, max_display=10)
+        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False, max_display=50)
         plt.gca().set_title(title)
         plt.tight_layout()
         plt.savefig("{}/plots/{}.png".format(self.output_directory, title), bbox_inches='tight')
@@ -908,7 +908,7 @@ DY & %s \\ \hline
         if x is None:
             print('<plotter> No x defined. Leaving class function')
             return
-        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False,plot_type='bar',max_display=10)
+        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False,plot_type='bar',max_display=50)
         plt.gca().set_title(title)
         plt.tight_layout()
         plt.savefig("{}/plots/{}.png".format(self.output_directory,title), bbox_inches='tight')

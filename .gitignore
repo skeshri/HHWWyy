@@ -3,3 +3,5 @@
 HHWWyy*/
 logs/
 *.root
+.DS_Store
+.ipynb_checkpoints/
