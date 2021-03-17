@@ -5,6 +5,10 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Code to train deep neural network
 # for HH->WWyy analysis.
+import os
+# Next two files are to get rid of warning while traning on IHEP GPU
+import tempfile
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -15,7 +19,6 @@ import time
 import pandas
 import pandas as pd
 import optparse, json, argparse, math
-import os
 from os import environ
 import ROOT
 
@@ -62,14 +65,14 @@ rng = np.random.RandomState(31337)
 CURRENT_DATETIME = datetime.now()
 
 def GenerateGitPatchAndLog(logFileName,GitPatchName):
-    CMSSWDirPath = os.environ['CMSSW_BASE']
-    CMSSWRel = CMSSWDirPath.split("/")[-1]
+    #CMSSWDirPath = os.environ['CMSSW_BASE']
+    #CMSSWRel = CMSSWDirPath.split("/")[-1]
 
     os.system('git diff > '+GitPatchName)
 
     outScript = open(logFileName,"w");
-    outScript.write('\nCMSSW Version used: '+CMSSWRel+'\n')
-    outScript.write('\nCurrent directory path: '+CMSSWDirPath+'\n')
+    #outScript.write('\nCMSSW Version used: '+CMSSWRel+'\n')
+    #outScript.write('\nCurrent directory path: '+CMSSWDirPath+'\n')
     outScript.close()
 
     os.system('echo -e "\n\n============\n== Latest commit summary \n\n" >> '+logFileName )
@@ -419,8 +422,8 @@ def main():
     # Create instance of the input files directory
     #inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
     #inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
-    inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
-    inputs_file_path = '/Users/ramkrishna/cernbox/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
+    #inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
+    inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
@@ -757,14 +760,14 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.png')
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
-    import shap
+    #import shap
     # from tensorflow.compat.v1.keras.backend import get_session
     # tf.compat.v1.disable_v2_behavior()
-    e = shap.DeepExplainer(model, X_train[:400, ])
+    #e = shap.DeepExplainer(model, X_train[:400, ])
     # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
-    shap_values = e.shap_values(X_test[:400, ])
-    Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    #shap_values = e.shap_values(X_test[:400, ])
+    #Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    #Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
     #e = shap.GradientExplainer(model, X_train[:100, ])
     #shap_values = e.shap_values(X_test[:100, ])
