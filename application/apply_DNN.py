@@ -28,7 +28,8 @@ from keras.callbacks import EarlyStopping
 from root_numpy import root2array, tree2array
 
 # python looks here for its packages: $PYTHONPATH. Need to add path to $PYTHONPATH so python can find the required packages.
-sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+# sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+sys.path.insert(0, '/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/')
 from plotting.plotter import plotter
 
 class apply_DNN(object):
@@ -67,7 +68,6 @@ class apply_DNN(object):
         # print "my_cols_list[:-1]: \n",my_cols_list[:-1]
         # print "my_cols_list[:-2]: \n",my_cols_list[:-2]
         if 'GluGluToHHTo2G4Q_node_cHHH1_2018' in process:
-            print "Signal..."
             sampleNames=process
             fileNames = [process]
             target=1
@@ -94,7 +94,6 @@ class apply_DNN(object):
                 'QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'QCD_Pt-40toInf' in process:
-            print "DEBUG: QCD_Pt-40toInf"
             treename = [
                 'QCD_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
             ]

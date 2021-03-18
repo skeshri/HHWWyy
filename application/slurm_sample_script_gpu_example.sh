@@ -19,18 +19,18 @@
 #SBATCH --job-name=HHWWgg
   
 # Specify how many cores you will need, default is one if not specified
-#SBATCH --ntasks=2
+#SBATCH --ntasks=1
 
 # Specify the output file path of your job
 # Attention!! Your afs account must have write access to the path
 # Or the job will be FAILED!
-#SBATCH --output=/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/logSlurm_%u_%x_%j.out
+#SBATCH --output=/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/application/logSlurm_%u_%x_%j.out
   
 # Specify memory to use, or slurm will allocate all available memory in MB
 #SBATCH --mem-per-cpu=30000
   
 # Specify how many GPU cards to use
-#SBATCH --gres=gpu:v100:2
+#SBATCH --gres=gpu:v100:1
     
 ######## Part 2 ######
 # Script workload    #
@@ -38,14 +38,17 @@
   
 # Replace the following lines with your real workload
 ########################################
-cd /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/ 
+cd /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/application/ 
 source /cvmfs/sft.cern.ch/lcg/views/dev4cuda/latest/x86_64-centos7-gcc8-opt/setup.sh
 export QT_QPA_PLATFORM=offscreen
 date
-dirTag="March18_LargStatBkgOnly_v3"
+dirTag="March18_LargStatBkgOnly_v2"
 #time(python train-BinaryDNN.py -t 1 -s March17_v2)
-time(python train-BinaryDNN.py -t 1 -s ${dirTag})
-time(python -m json.tool HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised.json > HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised_nice.json) 
+#time(python train-BinaryDNN.py -t 1 -s ${dirTag})
+#time(python -m json.tool HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised.json > HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised_nice.json) 
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_10March_SHiggs_BalanceYields -p HHWWgg DiPhoton QCD_Pt_30to40 QCD_Pt_40toInf GJet_Pt_20to40 GJet_Pt_40toInf TTGG TTGJets TTJets DYJetsToLL_M50 WW_TuneCP5_13TeV ttHJetToGG_M125_13TeV VBFHToGG_M125_13TeV GluGluHToGG_M125_TuneCP5_13TeV VHToGG_M125_13TeV)
+time(python run_network_evaluation.py -d HHWWyyDNN_binary_March18_DiPhotonJetsBoxBkg_v1_BalanceYields -p HHWWgg DiPhoton)
+
 date
 ##########################################
 # Work load end

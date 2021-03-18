@@ -7,9 +7,10 @@ import pandas as pd
 import optparse, json, argparse, subprocess
 import ROOT
 import sys
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 from array import array
-sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+# sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+sys.path.insert(0, '/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/')
 from plotting.plotter import plotter
 from ROOT import TFile, TTree, gDirectory, gPad
 from sklearn.preprocessing import LabelEncoder
@@ -100,7 +101,8 @@ def main():
     for process in processes:
         print('<run_network_evaluation> Process: ', process)
         current_sample_name = process_filename.get(process)
-        inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
+        # inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
+        inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
         if 'HHWWgg' in process:
             inputs_file_path += 'Signal/'
         else:
@@ -117,7 +119,7 @@ def main():
             os.makedirs(samples_final_path_dir)
 
         dataframe_name = '%s/%s_dataframe.csv' %(samples_final_path_dir,process)
-        print "dataframe_name: ",dataframe_name
+        print ("dataframe_name: ",dataframe_name)
         if os.path.isfile(dataframe_name) and (args.load_dataset == 0):
             print('<run_network_evaluation> Loading %s . . . . ' % dataframe_name)
             data = pandas.read_csv(dataframe_name)
@@ -142,7 +144,7 @@ def main():
         print("<run_network_evaluation> Total length of HH = %i, bckg = %i" % (nHH, nbckg))
 
         # Create dataset from dataframe to evaluate DNN
-        print "training_columns.shape: ",len(training_columns)
+        print ("training_columns.shape: ",len(training_columns))
         X_test = data[training_columns].values
         # print "X_test.shape:\n",X_test.shape
         # print "X_test:\n",X_test

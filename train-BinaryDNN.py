@@ -116,19 +116,19 @@ def load_data(inputPath,variables,criteria):
             subdir_name = 'Backgrounds'
             fileNames = [
                 # FH File Names
-                'DiPhotonJetsBox_M40_80',
+                # 'DiPhotonJetsBox_M40_80',
                 'DiPhotonJetsBox_MGG-80toInf_13TeV',
-                'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
-                'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                # 'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
+                # 'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                # 'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                # 'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
+                # 'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                # 'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
                 'TTGG_0Jets_TuneCP5_13TeV',
                 'TTGJets_TuneCP5_13TeV',
-                'TTJets_TuneCP5_13TeV',
-                'DYJetsToLL_M-50_TuneCP5_13TeV',
-                'WW_TuneCP5_13TeV-pythia8',
+                # 'TTJets_TuneCP5_13TeV',
+                # 'DYJetsToLL_M-50_TuneCP5_13TeV',
+                # 'WW_TuneCP5_13TeV-pythia8',
                 'ttHJetToGG_M125_13TeV',
                 'VBFHToGG_M125_13TeV',
                 'GluGluHToGG_M125_TuneCP5_13TeV',
@@ -718,14 +718,14 @@ def main():
 
     # Node probabilities for training sample events
     result_probs = model.predict(np.array(X_train))
-    result_classes = model.predict_classes(np.array(X_train))
+    # result_classes = model.predict_classes(np.array(X_train))
     # model.predict_classes is going to be deprecated.. so one should use np.argmax
-    # result_classes = np.argmax(model.predict(np.array(X_train)), axis=-1)
+    result_classes = np.argmax(model.predict(np.array(X_train)), axis=-1)
 
     # Node probabilities for testing sample events
     result_probs_test = model.predict(np.array(X_test))
-    result_classes_test = model.predict_classes(np.array(X_test))
-    # result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
+    # result_classes_test = model.predict_classes(np.array(X_test))
+    result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
 
     # Store model in file
     model_output_name = os.path.join(output_directory,'model.h5')
