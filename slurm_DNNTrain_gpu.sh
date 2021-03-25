@@ -40,12 +40,15 @@
 ########################################
 cd /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/ 
 source /cvmfs/sft.cern.ch/lcg/views/dev4cuda/latest/x86_64-centos7-gcc8-opt/setup.sh
+# pip install shap
 export QT_QPA_PLATFORM=offscreen
+# Reference: https://stackoverflow.com/a/55210689/2302094
+export XDG_RUNTIME_DIR=/hpcfs/bes/mlgpu/sharma/ML_GPU/someRuntimeFix
 date
-dirTag="March18_LargStatBkgOnly_v3"
-#time(python train-BinaryDNN.py -t 1 -s March17_v2)
+# dirTag="March19_WithShap_v1"
+dirTag="March24_ManyVarsAngularVars_QCD_v1"
 time(python train-BinaryDNN.py -t 1 -s ${dirTag})
-time(python -m json.tool HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised.json > HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised_nice.json) 
+#time(python -m json.tool HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised.json > HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised_nice.json) 
 date
 ##########################################
 # Work load end

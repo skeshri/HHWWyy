@@ -1,3 +1,7 @@
+import os
+# Next two files are to get rid of warning while traning on IHEP GPU
+import tempfile
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 from apply_DNN import apply_DNN
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +25,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import class_weight
-import os
 from os import environ
 
 def main():
@@ -71,10 +74,10 @@ def main():
     'ttHJetToGG_M125_13TeV': ('ttHJetToGG_M125_13TeV'),
     'VBFHToGG_M125_13TeV': ('VBFHToGG_M125_13TeV'),
     'GluGluHToGG_M125_TuneCP5_13TeV': ('GluGluHToGG_M125_TuneCP5_13TeV'),
-    'VHToGG_M125_13TeV': ('VHToGG_M125_13TeV')
+    'VHToGG_M125_13TeV': ('VHToGG_M125_13TeV'),
 
     # 'ttHJetToGG' : ('ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8_Hadded')
-    #'Data' : ('Data_'+JESname+region)
+    'Data' : ('allData')
     }
 
     training_columns = column_headers[:-2]
@@ -290,6 +293,10 @@ def main():
         elif 'VHToGG' in current_sample_name:
             treename = [
                 'wzh_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'Data' in current_sample_name:
+            treename = [
+                'Data_13TeV_HHWWggTag_1'
             ]
         else:
             print('<run_network_evaluation> Warning: Process name not recognised. Exiting.',current_sample_name)

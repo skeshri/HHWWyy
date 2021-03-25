@@ -196,6 +196,10 @@ class apply_DNN(object):
             treename = [
                 'wzh_125_13TeV_HHWWggTag_1'
             ]
+        elif 'Data' in process:
+            treename = [
+                'Data_13TeV_HHWWggTag_1'
+            ]
 
         filename_fullpath = inputPath+"/"+process+".root"
         print("<apply_DNN> Input file: ", filename_fullpath)

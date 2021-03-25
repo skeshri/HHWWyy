@@ -1,5 +1,5 @@
 import numpy as np
-#import shap
+import shap
 import pandas
 import os
 import sklearn
@@ -64,6 +64,8 @@ class plotter(object):
         self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(20,20))
         #self.ax1.plot(x1,y1)
         #self.fig.tick_params(fontsize=15)
+        # sns.heatmap(df.iloc[:,:50].corr())
+        # sns.heatmap(df.iloc[:,50:].corr())
         opts = {"annot" : True, "ax" : self.ax1, "vmin" : 0, "vmax" : 1*100, "annot_kws" : {"size":8}, "cmap" : plt.get_cmap("Blues",20), 'fmt' : '0.2f',}
         self.ax1.set_title("Correlations")
         sns.heatmap(self.data.corr(method='spearman')*100, **opts)
@@ -79,6 +81,20 @@ class plotter(object):
 
         return
 
+    def corrFilter(self, x: pandas.DataFrame, bound: float):
+        """
+        this function filter the correlated variables as per the value of bound given
+        
+        :param      x:      dataframe for training
+        :type       x:      pandas dataframe
+        :param      bound:  value of bound
+        :type       bound:  float
+        """
+        xCorr = x.corr()
+        xFiltered = xCorr[((xCorr >= bound) | (xCorr <= -bound)) & (xCorr !=1.000)]
+        xFlattened = xFiltered.unstack().sort_values().drop_duplicates()
+        return xFlattened
+
     def ROC(self, model, X_test, Y_test, X_train, Y_train):
         y_pred_keras_test = model.predict(X_test).ravel()
         fpr_keras_test, tpr_keras_test, thresholds_keras_test = roc_curve(Y_test, y_pred_keras_test)
@@ -92,10 +108,11 @@ class plotter(object):
         plt.plot([0, 1], [0, 1], 'k--')
         plt.plot(fpr_keras_test, tpr_keras_test, label='Test (area = {:.3f})'.format(auc_keras_test))
         plt.plot(fpr_keras_train, tpr_keras_train, label='Train (area = {:.3f})'.format(auc_keras_train))
-        plt.xlabel('False positive rate')
-        plt.ylabel('True positive rate')
-        plt.title('ROC curve')
-        plt.legend(loc='best')
+        plt.xlabel('False positive rate',fontsize=21)
+        plt.ylabel('True positive rate',fontsize=21)
+        plt.title('ROC curve',fontsize=21)
+        # plt.legend(loc='lower right',prop={'size': 18})
+        plt.legend(loc='lower right',fontsize=35) # fontsizeint or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}
         plt.tight_layout()
 
         return
@@ -104,10 +121,10 @@ class plotter(object):
         self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10))
         plt.plot(history.history[label])
         plt.plot(history.history['val_'+label])
-        plt.title('model '+label)
-        plt.ylabel(label)
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='best')
+        plt.title('model '+label,fontsize=21)
+        plt.ylabel(label,fontsize=21)
+        plt.xlabel('epoch',fontsize=21)
+        plt.legend(['train', 'test'], loc='best',fontsize=35)
         plt.tight_layout()
 
         return
@@ -215,10 +232,10 @@ class plotter(object):
 
         plt.plot([0, 1], [0, 1], linestyle='--', markersize=8,)
         plt.rcParams.update({'font.size': 22})
-        self.ax1.set_title(pltname, fontsize=18)
-        plt.legend(loc="lower right")
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
+        self.ax1.set_title(pltname, fontsize=21)
+        plt.legend(loc="lower right",fontsize=35)
+        plt.xlabel('False Positive Rate',fontsize=21)
+        plt.ylabel('True Positive Rate',fontsize=21)
         plt.tight_layout()
         # save the plot
         save_name = pltname
@@ -431,10 +448,10 @@ class plotter(object):
         title_ = '%s %s node' % (plot_title,node_name)
         plt.title(title_)
         label_name = 'DNN Output Score'
-        plt.xlabel(label_name)
-        plt.ylabel('(1/N)dN/dX')
+        plt.xlabel(label_name,fontsize=21)
+        plt.ylabel('(1/N)dN/dX',fontsize=35)
 
-        leg = plt.legend(loc='best', frameon=False, fancybox=False, fontsize=9)
+        leg = plt.legend(loc='best', frameon=False, fancybox=False, fontsize=21)
         leg.get_frame().set_edgecolor('w')
         frame = leg.get_frame()
         frame.set_facecolor('White')
@@ -539,9 +556,9 @@ class plotter(object):
         test_SvsBSep = "{0:.5g}".format(self.GetSeparation(histo_test_sig,histo_test_bckg))
 
         S_v_B_train_sep = 'SvsB train Sep.: %s' % ( train_SvsBSep )
-        self.ax.annotate(S_v_B_train_sep,  xy=(0.7, 2.5), xytext=(0.7, 2.5), fontsize=9)
+        self.ax.annotate(S_v_B_train_sep,  xy=(0.4, 2.5), xytext=(0.4, 2.5), fontsize=11)
         S_v_B_test_sep = 'SvsB test Sep.: %s' % ( test_SvsBSep )
-        self.ax.annotate(S_v_B_test_sep,  xy=(0.7, 1.75), xytext=(0.7, 1.5), fontsize=9)
+        self.ax.annotate(S_v_B_test_sep,  xy=(0.4, 1.75), xytext=(0.4, 1.5), fontsize=11)
 
         separations_forTable = r'''%s & \textbackslash ''' % (S_v_B_test_sep)
 
@@ -551,7 +568,7 @@ class plotter(object):
         plt.xlabel(label_name)
         plt.ylabel('(1/N)dN/dX')
 
-        leg = plt.legend(loc='best', frameon=False, fancybox=False, fontsize=9)
+        leg = plt.legend(loc='best', frameon=False, fancybox=False, fontsize=15)
         leg.get_frame().set_edgecolor('w')
         frame = leg.get_frame()
         frame.set_facecolor('White')

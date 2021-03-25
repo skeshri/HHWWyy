@@ -53,7 +53,7 @@ from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 
-# import shap
+import shap
 from root_numpy import root2array, tree2array
 from datetime import datetime
 from plotting.plotter import plotter
@@ -108,7 +108,7 @@ def load_data(inputPath,variables,criteria):
             sampleNames=key
             subdir_name = 'Signal'
             fileNames = [
-            'GluGluToHHTo2G4Q_node_cHHH1_2018'
+            'GluGluToHHTo2G4Q_node_cHHH1_2017'
             ]
             target=1
         else:
@@ -132,17 +132,22 @@ def load_data(inputPath,variables,criteria):
                 'ttHJetToGG_M125_13TeV',
                 'VBFHToGG_M125_13TeV',
                 'GluGluHToGG_M125_TuneCP5_13TeV',
-                'VHToGG_M125_13TeV'
+                'VHToGG_M125_13TeV',
+
+                'datadrivenQCD_v2'
             ]
             target=0
 
         for filen in fileNames:
-            if 'GluGluToHHTo2G2Qlnu_node_cHHH1_2017' in filen:
-                treename=['GluGluToHHTo2G2Qlnu_node_cHHH1_13TeV_HHWWggTag_1_v1']
+            if 'GluGluToHHTo2G4Q_node_cHHH1_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
             elif 'GluGluToHHTo2G4Q_node_cHHH1_2018' in filen:
                 treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
+            elif 'datadriven' in filen:
+                treename=['Data_13TeV_HHWWggTag_1']
+                process_ID = 'QCD'
             elif 'GluGluHToGG' in filen:
                 treename=['ggh_125_13TeV_HHWWggTag_1']
                 process_ID = 'Hgg'
@@ -423,7 +428,8 @@ def main():
     #inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
     #inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
     #inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
-    inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
+    # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
+    inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/new/DNN_MoreVar/'
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
@@ -650,6 +656,10 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.png')
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.pdf')
 
+    print(Plotter.corrFilter(train_df, .5))
+
+    # exit()
+
     # Fit label encoder to Y_train
     newencoder = LabelEncoder()
     newencoder.fit(Y_train)
@@ -760,14 +770,14 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.png')
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
-    #import shap
+    import shap
     # from tensorflow.compat.v1.keras.backend import get_session
     # tf.compat.v1.disable_v2_behavior()
-    #e = shap.DeepExplainer(model, X_train[:400, ])
+    e = shap.DeepExplainer(model, X_train[:400, ])
     # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
-    #shap_values = e.shap_values(X_test[:400, ])
-    #Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    #Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    shap_values = e.shap_values(X_test[:400, ])
+    Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
     #e = shap.GradientExplainer(model, X_train[:100, ])
     #shap_values = e.shap_values(X_test[:100, ])
