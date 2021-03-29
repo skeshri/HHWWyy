@@ -46,10 +46,11 @@ dirTag="March18_LargStatBkgOnly_v2"
 #time(python train-BinaryDNN.py -t 1 -s March17_v2)
 #time(python train-BinaryDNN.py -t 1 -s ${dirTag})
 #time(python -m json.tool HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised.json > HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised_nice.json) 
-#time(python run_network_evaluation.py -d HHWWyyDNN_binary_10March_SHiggs_BalanceYields -p HHWWgg DiPhoton QCD_Pt_30to40 QCD_Pt_40toInf GJet_Pt_20to40 GJet_Pt_40toInf TTGG TTGJets TTJets DYJetsToLL_M50 WW_TuneCP5_13TeV ttHJetToGG_M125_13TeV VBFHToGG_M125_13TeV GluGluHToGG_M125_TuneCP5_13TeV VHToGG_M125_13TeV)
+# time(python run_network_evaluation.py -d HHWWyyDNN_binary_10March_SHiggs_BalanceYields -p HHWWgg DiPhoton QCD_Pt_30to40 QCD_Pt_40toInf GJet_Pt_20to40 GJet_Pt_40toInf TTGG TTGJets TTJets DYJetsToLL_M50 WW_TuneCP5_13TeV ttHJetToGG_M125_13TeV VBFHToGG_M125_13TeV GluGluHToGG_M125_TuneCP5_13TeV VHToGG_M125_13TeV datadrivenQCD)
+time(python run_network_evaluation.py -d HHWWyyDNN_binary_March24_ManyVarsAngularVars_QCD_v1_BalanceYields -p HHWWgg DiPhoton Data TTGG TTGJets TTJets DYJetsToLL_M50 WW_TuneCP5_13TeV ttHJetToGG_M125_13TeV VBFHToGG_M125_13TeV GluGluHToGG_M125_TuneCP5_13TeV VHToGG_M125_13TeV datadrivenQCD)
 #time(python run_network_evaluation.py -d HHWWyyDNN_binary_March18_LargStatBkgOnly_v4_BalanceYields -p HHWWgg DiPhoton)
 # time(python run_network_evaluation.py -d HHWWyyDNN_binary_March18_LargStatBkgOnly_v4_BalanceYields -p Data)
-time(python run_network_evaluation.py -d HHWWyyDNN_binary_March18_LargStatBkgOnly_v4_BalanceYields -p ttHJetToGG_M125_13TeV VBFHToGG_M125_13TeV GluGluHToGG_M125_TuneCP5_13TeV VHToGG_M125_13TeV )
+# time(python run_network_evaluation.py -d HHWWyyDNN_binary_March18_LargStatBkgOnly_v4_BalanceYields -p ttHJetToGG_M125_13TeV VBFHToGG_M125_13TeV GluGluHToGG_M125_TuneCP5_13TeV VHToGG_M125_13TeV )
 
 date
 ##########################################

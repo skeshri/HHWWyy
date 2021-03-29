@@ -19,7 +19,7 @@
 #SBATCH --job-name=HHWWgg
   
 # Specify how many cores you will need, default is one if not specified
-#SBATCH --ntasks=2
+#SBATCH --ntasks=3
 
 # Specify the output file path of your job
 # Attention!! Your afs account must have write access to the path
@@ -30,7 +30,7 @@
 #SBATCH --mem-per-cpu=30000
   
 # Specify how many GPU cards to use
-#SBATCH --gres=gpu:v100:2
+#SBATCH --gres=gpu:v100:3
     
 ######## Part 2 ######
 # Script workload    #
@@ -46,7 +46,7 @@ export QT_QPA_PLATFORM=offscreen
 export XDG_RUNTIME_DIR=/hpcfs/bes/mlgpu/sharma/ML_GPU/someRuntimeFix
 date
 # dirTag="March19_WithShap_v1"
-dirTag="March24_ManyVarsAngularVars_QCD_v1"
+dirTag="March24_ManyVarsAngularVars_QCD_Removal_v1"
 time(python train-BinaryDNN.py -t 1 -s ${dirTag})
 #time(python -m json.tool HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised.json > HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised_nice.json) 
 date

@@ -60,12 +60,13 @@ def main():
     # Dictionary of filenames to be run over along with their keys.
     process_filename = {
     # 'HHWWgg' : ('HHWWgg-SL-SM-NLO-2017'),
-    'HHWWgg' : ('GluGluToHHTo2G4Q_node_cHHH1_2018'),
+    'HHWWgg' : ('GluGluToHHTo2G4Q_node_cHHH1_2017'),
     'DiPhoton':  ('DiPhotonJetsBox_MGG-80toInf_13TeV'),
-    'QCD_Pt_30to40': ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
-    'QCD_Pt_40toInf': ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
-    'GJet_Pt_20to40': ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
-    'GJet_Pt_40toInf': ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    'datadrivenQCD': ('datadrivenQCD_v2'),
+    # 'QCD_Pt_30to40': ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+    # 'QCD_Pt_40toInf': ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    # 'GJet_Pt_20to40': ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+    # 'GJet_Pt_40toInf': ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
     'TTGG': ('TTGG_0Jets_TuneCP5_13TeV'),
     'TTGJets': ('TTGJets_TuneCP5_13TeV'),
     'TTJets': ('TTJets_TuneCP5_13TeV'),
@@ -105,7 +106,8 @@ def main():
         print('<run_network_evaluation> Process: ', process)
         current_sample_name = process_filename.get(process)
         # inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
-        inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
+        # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
+        inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/new/DNN_MoreVar/'
         if 'HHWWgg' in process:
             inputs_file_path += 'Signal/'
         else:
@@ -187,6 +189,8 @@ def main():
             treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in current_sample_name:
             treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
+        elif 'datadrivenQCD' in current_sample_name:
+            treename=['Data_13TeV_HHWWggTag_1']
         elif 'QCD_Pt-30to40' in current_sample_name:
             treename = [
                 'QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
