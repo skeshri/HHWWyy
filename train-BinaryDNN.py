@@ -59,6 +59,12 @@ from datetime import datetime
 from plotting.plotter import plotter
 # import pydotplus as pydot
 
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+# exit()
+
+# tf.debugging.set_log_device_placement(True)
+
+
 seed = 7
 np.random.seed(7)
 rng = np.random.RandomState(31337)
@@ -342,6 +348,8 @@ def baseline_model(
                    init_mode='glorot_normal',
                    learn_rate=0.001
                    ):
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
     model = Sequential()
     model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     #model.add(Dense(64,activation=activation))
@@ -656,7 +664,7 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.png')
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.pdf')
 
-    print(Plotter.corrFilter(train_df, .5))
+    print(Plotter.corrFilter(train_df, .3))
 
     # exit()
 
