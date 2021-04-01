@@ -452,18 +452,30 @@ def main():
     weights='BalanceYields'# 'BalanceYields' or 'BalanceNonWeighted'
     optimizer = args.model
     validation_split=0.1
+    # Load dnn parameter json file
+    f_dnn_parameter = open('dnn_parameter.json',)
+    dnn_parameter = json.load(f_dnn_parameter)
+    f_dnn_parameter.close()
+
     # hyper-parameter scan results
     if weights == 'BalanceNonWeighted':
-        learn_rate = 0.0005
-        epochs = 200
-        batch_size=200
+        learn_rate = dnn_parameter['default'][0]['learn_rate']
+        epochs = dnn_parameter['default'][0]['epochs']
+        batch_size=dnn_parameter['default'][0]['batch_size']
+        optimizer=dnn_parameter['default'][0]['optimizer']
     if weights == 'BalanceYields':
-        learn_rate = 0.0001
-        epochs = 200
-        batch_size=32
+        learn_rate = dnn_parameter['default'][0]['learn_rate']
+        epochs = dnn_parameter['default'][0]['epochs']
+        batch_size=dnn_parameter['default'][0]['batch_size']
+        optimizer=dnn_parameter['default'][0]['optimizer']
         #epochs = 10
         #batch_size=200
 
+    print("Input DNN parameters:")
+    print("\tepochs: ",epochs)
+    print("\tbatch_size: ",batch_size)
+    print("\tlearn_rate: ",learn_rate)
+    print("\toptimizer: ",optimizer)
     # Create instance of output directory where all results are saved.
     output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
     check_dir(output_directory)
