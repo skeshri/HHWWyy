@@ -378,7 +378,7 @@ def baseline_model(
     return model
 
 def gscv_model(num_variables,optimizer="Adam",learn_rate=0.001):
-    print "Inside gscv_model..."
+    print("Inside gscv_model...")
     model = Sequential()
     model.add(Dense(num_variables,input_dim=num_variables,kernel_initializer='glorot_normal',activation='relu'))
     # model.add(Dense(39,activation='relu'))
@@ -819,8 +819,8 @@ def main():
     with open(model_json_name,'w') as json_file:
         json_file.write(model_json)
     model.summary()
-    # model_schematic_name = os.path.join(output_directory,'model_schematic.eps')
-    # plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
+    model_schematic_name = os.path.join(output_directory,'model_schematic.png')
+    plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
 
     print('================')
     print('Training event labels: ', len(Y_train))

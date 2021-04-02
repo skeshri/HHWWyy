@@ -1,4 +1,4 @@
-IHEP official doc about slurm: http://afsapply.ihep.ac.cn/cchelp/en/local-cluster/jobs/slurm/#3222-usage-of-the-slum-gpu-cluster
+IHEP official doc about slurm: [Link](http://afsapply.ihep.ac.cn/cchelp/en/local-cluster/jobs/slurm/#3222-usage-of-the-slum-gpu-cluster)
 
 # Get ML environment
 
@@ -11,9 +11,11 @@ source /cvmfs/sft.cern.ch/lcg/views/dev4cuda/latest/x86_64-centos7-gcc8-opt/setu
 ```bash
 cd /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy
 # To submit job
-sbatch slurm_sample_script_gpu_example.py 
+sbatch slurm_sample_script_gpu_example.py
 # Check status
 squeue -u sharma
+# kill the job
+scancel <jobid>
 ```
 
 
@@ -22,15 +24,17 @@ squeue -u sharma
 ## Error of matplotlib
 
 Error:
+
 ```
-Matplotlib created a temporary config/cache directory at /tmp/matplotlib-arj6o0s7 because the 
-default path (/afs/ihep.ac.cn/users/s/sharma/.config/matplotlib) is not a writable directory; 
-it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, 
+Matplotlib created a temporary config/cache directory at /tmp/matplotlib-arj6o0s7 because the
+default path (/afs/ihep.ac.cn/users/s/sharma/.config/matplotlib) is not a writable directory;
+it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory,
 in particular to speed up the import of Matplotlib and to better support multiprocessing.
 ```
 
 Solution:
 Add following line at the begining of main python script:
+
 ```python
 import os
 import tempfile
@@ -41,6 +45,7 @@ os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 ## QT Error
 
 Error:
+
 ```
 Thu Mar 18 00:47:34 CST 2021
 2021-03-18 00:47:41.356066: I tensorflow/stream_executor/platform/default/dso_loader.cc:48] Successfully opened dynamic library libcudart.so.10.1
@@ -51,10 +56,22 @@ This application failed to start because no Qt platform plugin could be initiali
 Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, webgl, xcb.
 
  *** Break *** abort
- ```
+```
 
 Solution:
+
 In slurm script add following line after loading the ML IHEP environment:
-```
+
+```bash
 export QT_QPA_PLATFORM=offscreen
+```
+
+## XDG_RUNTIME_DIR error
+
+Reference: [https://stackoverflow.com/a/55210689/2302094](https://stackoverflow.com/a/55210689/2302094)
+
+Add the following line to the slurm script
+
+```bash
+export XDG_RUNTIME_DIR=/hpcfs/bes/mlgpu/sharma/ML_GPU/someRuntimeFix
 ```
