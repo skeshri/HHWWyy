@@ -352,13 +352,13 @@ def baseline_model(
     # with strategy.scope():
     model = Sequential()
     model.add(Dense(50,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
-    model.add(Dropout(0.2))
+    # model.add(Dropout(0.2))
     model.add(Dense(100,activation=activation))
-    model.add(Dropout(0.2))
+    # model.add(Dropout(0.2))
     model.add(Dense(80,activation=activation))
-    model.add(Dropout(0.2))
+    # model.add(Dropout(0.2))
     model.add(Dense(40,activation=activation))
-    model.add(Dropout(0.2))
+    # model.add(Dropout(0.2))
     model.add(Dense(20,activation=activation))
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
@@ -716,8 +716,8 @@ def main():
         else:
             # Define model for analysis
             early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=1)
-            # model = baseline_model(num_variables, learn_rate=learn_rate)
-            model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            model = baseline_model(num_variables, learn_rate=learn_rate)
+            # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
             # Tensorboard
             logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -765,8 +765,6 @@ def main():
     with open(model_json_name,'w') as json_file:
         json_file.write(model_json)
     model.summary()
-    # model_schematic_name = os.path.join(output_directory,'model_schematic.eps')
-    # plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
 
     print('================')
     print('Training event labels: ', len(Y_train))
@@ -788,6 +786,7 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.png')
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
+
     import shap
     # from tensorflow.compat.v1.keras.backend import get_session
     # tf.compat.v1.disable_v2_behavior()
@@ -796,6 +795,9 @@ def main():
     shap_values = e.shap_values(X_test[:400, ])
     Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
     Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+
+    model_schematic_name = os.path.join(output_directory,'model_schematic.eps')
+    plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
 
     #e = shap.GradientExplainer(model, X_train[:100, ])
     #shap_values = e.shap_values(X_test[:100, ])

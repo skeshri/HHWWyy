@@ -1,7 +1,7 @@
 {
     "default": [
         {
-            "epoch": 200,
+            "epochs": 200,
             "batch_size": 100,
             "learn_rate": 0.001,
             "optimizer": "Adam"
@@ -9,7 +9,7 @@
     ],
     "Optimized_FH": [
         {
-            "epoch": 300,
+            "epochs": 300,
             "batch_size": 100,
             "learn_rate": 0.001,
             "optimizer": "Adam"
