@@ -375,16 +375,28 @@ def baseline_model(
         model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
     return model
 
-def gscv_model(learn_rate=0.001):
+def gscv_model(
+                num_variables,
+                optimizer="Adam",
+                activation='relu',
+                init_mode='glorot_normal',
+                learn_rate=0.001
+                ):
     model = Sequential()
-    model.add(Dense(32,input_dim=29,kernel_initializer='glorot_normal',activation='relu'))
-    model.add(Dense(14,activation='relu'))
-    model.add(Dense(8,activation='relu'))
-    model.add(Dense(4,activation='relu'))
+    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(10,activation=activation))
+    model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
-    #model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
-    optimizer=Nadam(lr=learn_rate)
-    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
+    if optimizer=='Adam':
+        model.compile(loss='binary_crossentropy',optimizer=Adam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Nadam':
+        model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adamax':
+        model.compile(loss='binary_crossentropy',optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adadelta':
+        model.compile(loss='binary_crossentropy',optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adagrad':
+        model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
     return model
 
 def new_model(
@@ -421,19 +433,22 @@ def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
         os.makedirs(dir)
+        os.system("cp dnn_parameter.json "+dir)
 
 def main():
     print('Using Keras version: ', keras.__version__)
 
     usage = 'usage: %prog [options]'
-    parser = argparse.ArgumentParser(usage)
-    parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
-    parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
-    parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
-    parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
-    parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
-    parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str) # Adam, Nadam, Adamax, Adadelta, Adagrad
-    args = parser.parse_args()
+    parent_parser = argparse.ArgumentParser(usage)
+    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
+    parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
+    parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
+    parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
+    parent_parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str) # Adam, Nadam, Adamax, Adadelta, Adagrad
+    parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
+    parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=0, type=int)
+    parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
+    args = parent_parser.parse_args()
     do_model_fit = args.train_model
     suffix = args.suffix
 
@@ -450,27 +465,54 @@ def main():
     weights='BalanceYields'# 'BalanceYields' or 'BalanceNonWeighted'
     optimizer = args.model
     validation_split=0.1
-    # hyper-parameter scan results
-    if weights == 'BalanceNonWeighted':
-        learn_rate = 0.0005
-        epochs = 200
-        batch_size=200
-    if weights == 'BalanceYields':
-        learn_rate = 0.0001
-        epochs = 200
-        batch_size=32
-        #epochs = 10
-        #batch_size=200
+    GridSearch = args.GridSearch
+    RandomSearch = args.RandomSearch
 
     # Create instance of output directory where all results are saved.
     output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
     check_dir(output_directory)
+
+    # dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+    # dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+    # dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+    # dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+    # f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+    # json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+    # f_dnn_parameter.close() # close json file
+
+    # Load dnn parameter json file
+    f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
+    dnn_parameter = json.load(f_dnn_parameter)
+    f_dnn_parameter.close()
+
+    # hyper-parameter scan results
+    if weights == 'BalanceNonWeighted':
+        learn_rate = dnn_parameter['default'][0]['learn_rate']
+        epochs = dnn_parameter['default'][0]['epochs']
+        batch_size=dnn_parameter['default'][0]['batch_size']
+        optimizer=dnn_parameter['default'][0]['optimizer']
+    if weights == 'BalanceYields':
+        learn_rate = dnn_parameter['default'][0]['learn_rate']
+        epochs = dnn_parameter['default'][0]['epochs']
+        batch_size=dnn_parameter['default'][0]['batch_size']
+        optimizer=dnn_parameter['default'][0]['optimizer']
+
+    print("Input DNN parameters:")
+    print("\tepochs: ",epochs)
+    print("\tbatch_size: ",batch_size)
+    print("\tlearn_rate: ",learn_rate)
+    print("\toptimizer: ",optimizer)
+
     """
     Before we start save git patch. This will be helpful in debug the code later or taking care of the differences between many traning directory.
     """
     LogdirName= "gitLog_"+(str(CURRENT_DATETIME.year)[-2:]
               +str(format(CURRENT_DATETIME.month,'02d'))
               +str(format(CURRENT_DATETIME.day,'02d'))
+              +"_"
+              +str(format(CURRENT_DATETIME.hour,'02d'))
+              +str(format(CURRENT_DATETIME.minute,'02d'))
+              +str(format(CURRENT_DATETIME.second,'02d'))
               )
     GenerateGitPatchAndLog(LogdirName+".log",LogdirName+".patch")
     os.system('mv '+LogdirName+".log "+LogdirName+".patch "+output_directory)
@@ -690,39 +732,87 @@ def main():
 
         if hyp_param_scan == 1:
             print('Begin at local time: ', time.localtime())
-            hyp_param_scan_name = 'hyp_param_scan_results.txt'
+            hyp_param_scan_name = output_directory+'/hyp_param_scan_results.txt'
             hyp_param_scan_results = open(hyp_param_scan_name,'a')
             time_str = str(time.localtime())+'\n'
-            hyp_param_scan_results.write(time_str)
-            hyp_param_scan_results.write(weights)
-            learn_rates=[0.00001, 0.0001]
-            epochs = [150,200]
-            batch_size = [400,500]
-            param_grid = dict(learn_rate=learn_rates,epochs=epochs,batch_size=batch_size)
-            model = KerasClassifier(build_fn=gscv_model,verbose=0)
-            grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
-            grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
-            print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
-            hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
-            means = grid_result.cv_results_['mean_test_score']
-            stds = grid_result.cv_results_['std_test_score']
-            params = grid_result.cv_results_['params']
-            for mean, stdev, param in zip(means, stds, params):
-                print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
-                hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
+            hyp_param_scan_results.write(time_str+'\n')
+            hyp_param_scan_results.write(weights+'\n')
+            learn_rate = [0.00001, 0.0001, 0.001, 0.01]
+            epochs = [50]
+            # epochs = [100, 150, 200, 300]
+            batch_size = [60]
+            # batch_size = [60, 100, 200, 250]
+            num_variables_arr =[num_variables]
+            optimizer = ['Adagrad']
+            # optimizer = ['Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+            if GridSearch == 1:
+                print("===============================================")
+                print("==       GridSearchCV                        ==")
+                print("===============================================")
+                param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
+                model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+                grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
+                print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
+                dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+                dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+                dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+                dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+                f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+                json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+                f_dnn_parameter.close() # close json file
+                hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
+                means = grid_result.cv_results_['mean_test_score']
+                stds = grid_result.cv_results_['std_test_score']
+                params = grid_result.cv_results_['params']
+                for mean, stdev, param in zip(means, stds, params):
+                    print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
+                    hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
+            elif RandomSearch == 1:
+                print("===============================================")
+                print("==       RandomizedSearchCV                  ==")
+                print("===============================================")
+                param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
+                model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                # grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+                grid = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_jobs=-1)
+                grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
+                print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
+                dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+                dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+                dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+                dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+                f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+                json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+                f_dnn_parameter.close() # close json file
+                hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
+                means = grid_result.cv_results_['mean_test_score']
+                stds = grid_result.cv_results_['std_test_score']
+                params = grid_result.cv_results_['params']
+                for mean, stdev, param in zip(means, stds, params):
+                    print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
+                    hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
             exit()
         else:
+            # Load the updated dnn parameter json file
+            f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
+            dnn_parameter = json.load(f_dnn_parameter)
+            f_dnn_parameter.close()
+            # hyper-parameter scan results
+            learn_rate = dnn_parameter['Optimized_FH'][0]['learn_rate']
+            epochs = dnn_parameter['Optimized_FH'][0]['epochs']
+            batch_size=dnn_parameter['Optimized_FH'][0]['batch_size']
+            optimizer=dnn_parameter['Optimized_FH'][0]['optimizer']
+
+            print("DNN parameters: Before traning the model:")
+            print("\tepochs: ",epochs)
+            print("\tbatch_size: ",batch_size)
+            print("\tlearn_rate: ",learn_rate)
+
             # Define model for analysis
             early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=1)
             model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-
-                   num_variables,
-                   optimizer='Nadam',
-                   activation='relu',
-                   dropout_rate=0.0,
-                   init_mode='glorot_normal',
-                   learn_rate=0.001
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
