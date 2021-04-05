@@ -53,7 +53,6 @@ from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 
-import shap
 from root_numpy import root2array, tree2array
 from datetime import datetime
 from plotting.plotter import plotter
@@ -122,25 +121,27 @@ def load_data(inputPath,variables,criteria):
             subdir_name = 'Backgrounds'
             fileNames = [
                 # FH File Names
-                # 'DiPhotonJetsBox_M40_80',
                 'DiPhotonJetsBox_MGG-80toInf_13TeV',
-                # 'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                # 'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                # 'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
-                # 'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                # 'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                # 'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
                 'TTGG_0Jets_TuneCP5_13TeV',
                 'TTGJets_TuneCP5_13TeV',
-                # 'TTJets_TuneCP5_13TeV',
-                # 'DYJetsToLL_M-50_TuneCP5_13TeV',
-                # 'WW_TuneCP5_13TeV-pythia8',
+                
                 'ttHJetToGG_M125_13TeV',
                 'VBFHToGG_M125_13TeV',
                 'GluGluHToGG_M125_TuneCP5_13TeV',
                 'VHToGG_M125_13TeV',
 
                 'datadrivenQCD_v2'
+
+                # 'DiPhotonJetsBox_M40_80',
+                # 'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
+                # 'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                # 'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                # 'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
+                # 'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
+                # 'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+                # 'TTJets_TuneCP5_13TeV',
+                # 'DYJetsToLL_M-50_TuneCP5_13TeV',
+                # 'WW_TuneCP5_13TeV-pythia8',
             ]
             target=0
 
@@ -437,6 +438,7 @@ def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
         os.makedirs(dir)
+        os.system("cp dnn_parameter.json "+dir)
 
 def main():
     print('Using Keras version: ', keras.__version__)
@@ -449,10 +451,11 @@ def main():
     parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
     parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
     parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str) # Adam, Nadam, Adamax, Adadelta, Adagrad
+    parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=0, type=int)
+    parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
     args = parser.parse_args()
     do_model_fit = args.train_model
     suffix = args.suffix
-
     # Create instance of the input files directory
     #inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
     #inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
@@ -466,8 +469,15 @@ def main():
     weights='BalanceYields'# 'BalanceYields' or 'BalanceNonWeighted'
     optimizer = args.model
     validation_split=0.1
+    GridSearch = args.GridSearch
+    RandomSearch = args.RandomSearch
+
+    # Create instance of output directory where all results are saved.
+    output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
+    check_dir(output_directory)
+
     # Load dnn parameter json file
-    f_dnn_parameter = open('dnn_parameter.json',)
+    f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
     dnn_parameter = json.load(f_dnn_parameter)
     f_dnn_parameter.close()
 
@@ -482,23 +492,23 @@ def main():
         epochs = dnn_parameter['default'][0]['epochs']
         batch_size=dnn_parameter['default'][0]['batch_size']
         optimizer=dnn_parameter['default'][0]['optimizer']
-        #epochs = 10
-        #batch_size=200
 
     print("Input DNN parameters:")
     print("\tepochs: ",epochs)
     print("\tbatch_size: ",batch_size)
     print("\tlearn_rate: ",learn_rate)
     print("\toptimizer: ",optimizer)
-    # Create instance of output directory where all results are saved.
-    output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
-    check_dir(output_directory)
+
     """
     Before we start save git patch. This will be helpful in debug the code later or taking care of the differences between many traning directory.
     """
     LogdirName= "gitLog_"+(str(CURRENT_DATETIME.year)[-2:]
               +str(format(CURRENT_DATETIME.month,'02d'))
               +str(format(CURRENT_DATETIME.day,'02d'))
+              +"_"
+              +str(format(CURRENT_DATETIME.hour,'02d'))
+              +str(format(CURRENT_DATETIME.minute,'02d'))
+              +str(format(CURRENT_DATETIME.second,'02d'))
               )
     GenerateGitPatchAndLog(LogdirName+".log",LogdirName+".patch")
     os.system('mv '+LogdirName+".log "+LogdirName+".patch "+output_directory)
@@ -695,12 +705,12 @@ def main():
     trainingweights = np.array(trainingweights)
 
     ## Input Variable Correlation plot
-    correlation_plot_file_name = 'correlation_plot'
-    Plotter.correlation_matrix(train_df)
-    Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.png')
-    Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.pdf')
+    # correlation_plot_file_name = 'correlation_plot'
+    # Plotter.correlation_matrix(train_df)
+    # Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.png')
+    # Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.pdf')
 
-    print(Plotter.corrFilter(train_df, .15))
+    # print(Plotter.corrFilter(train_df, .15))
 
     # exit()
 
@@ -718,43 +728,71 @@ def main():
 
         if hyp_param_scan == 1:
             print('Begin at local time: ', time.localtime())
-            hyp_param_scan_name = 'hyp_param_scan_results.txt'
+            hyp_param_scan_name = output_directory+'/hyp_param_scan_results.txt'
             hyp_param_scan_results = open(hyp_param_scan_name,'a')
             time_str = str(time.localtime())+'\n'
             hyp_param_scan_results.write(time_str+'\n')
             hyp_param_scan_results.write(weights+'\n')
-            learn_rate = [0.0001]
-            # learn_rate = [0.00001, 0.0001, 0.001, 0.01]
+            # learn_rate = [0.0001]
+            learn_rate = [0.00001, 0.0001, 0.001, 0.01]
             # epochs = [100]
-            epochs = [10, 50, 100, 150, 200, 300]
+            epochs = [100, 150, 200, 300]
             # batch_size = [100]
-            batch_size = [60, 80, 100, 150, 200, 250, 300, 350, 400]
-            optimizer = ['Adam']
+            batch_size = [60, 100, 200, 250]
+            # optimizer = ['Adam']
             num_variables_arr =[num_variables]
-            # optimizer = ['Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
-            param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
-            model = KerasClassifier(build_fn=gscv_model,verbose=1)
-            grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
-            grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
-            print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
-            dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
-            dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
-            dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
-            dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
-            f_dnn_parameter = open("dnn_parameter.json", "w")   # open json file
-            json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
-            f_dnn_parameter.close() # close json file
-            hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
-            means = grid_result.cv_results_['mean_test_score']
-            stds = grid_result.cv_results_['std_test_score']
-            params = grid_result.cv_results_['params']
-            for mean, stdev, param in zip(means, stds, params):
-                print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
-                hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
+            optimizer = ['Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+            if GridSearch == 1:
+                print("===============================================")
+                print("==       GridSearchCV                        ==")
+                print("===============================================")
+                param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
+                model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+                grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
+                print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
+                dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+                dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+                dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+                dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+                f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+                json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+                f_dnn_parameter.close() # close json file
+                hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
+                means = grid_result.cv_results_['mean_test_score']
+                stds = grid_result.cv_results_['std_test_score']
+                params = grid_result.cv_results_['params']
+                for mean, stdev, param in zip(means, stds, params):
+                    print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
+                    hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
+            elif RandomSearch == 1:
+                print("===============================================")
+                print("==       RandomizedSearchCV                  ==")
+                print("===============================================")
+                param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
+                model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                # grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+                grid = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_jobs=-1)
+                grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
+                print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
+                dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+                dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+                dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+                dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+                f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+                json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+                f_dnn_parameter.close() # close json file
+                hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
+                means = grid_result.cv_results_['mean_test_score']
+                stds = grid_result.cv_results_['std_test_score']
+                params = grid_result.cv_results_['params']
+                for mean, stdev, param in zip(means, stds, params):
+                    print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
+                    hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
             # exit()
         # else:
         # Load the updated dnn parameter json file
-        f_dnn_parameter = open('dnn_parameter.json',)
+        f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
         dnn_parameter = json.load(f_dnn_parameter)
         f_dnn_parameter.close()
         # hyper-parameter scan results
@@ -842,14 +880,14 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.png')
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
-    import shap
-    # from tensorflow.compat.v1.keras.backend import get_session
-    # tf.compat.v1.disable_v2_behavior()
-    e = shap.DeepExplainer(model, X_train[:400, ])
-    # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
-    shap_values = e.shap_values(X_test[:400, ])
-    Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # import shap
+    # # from tensorflow.compat.v1.keras.backend import get_session
+    # # tf.compat.v1.disable_v2_behavior()
+    # e = shap.DeepExplainer(model, X_train[:400, ])
+    # # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
+    # shap_values = e.shap_values(X_test[:400, ])
+    # Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
     #e = shap.GradientExplainer(model, X_train[:100, ])
     #shap_values = e.shap_values(X_test[:100, ])

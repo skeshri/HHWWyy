@@ -114,7 +114,8 @@ def load_data(inputPath,variables,criteria):
             sampleNames=key
             subdir_name = 'Signal'
             fileNames = [
-            'GluGluToHHTo2G4Q_node_cHHH1_2017'
+            # 'GluGluToHHTo2G4Q_node_cHHH1_2017'
+            'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
             ]
             target=1
         else:
@@ -147,6 +148,9 @@ def load_data(inputPath,variables,criteria):
         for filen in fileNames:
             if 'GluGluToHHTo2G4Q_node_cHHH1_2017' in filen:
                 treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017' in filen:
+                treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
             elif 'GluGluToHHTo2G4Q_node_cHHH1_2018' in filen:
                 treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
@@ -351,15 +355,9 @@ def baseline_model(
     # strategy = tf.distribute.MirroredStrategy()
     # with strategy.scope():
     model = Sequential()
-    model.add(Dense(50,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     # model.add(Dropout(0.2))
-    model.add(Dense(100,activation=activation))
-    # model.add(Dropout(0.2))
-    model.add(Dense(80,activation=activation))
-    # model.add(Dropout(0.2))
-    model.add(Dense(40,activation=activation))
-    # model.add(Dropout(0.2))
-    model.add(Dense(20,activation=activation))
+    model.add(Dense(10,activation=activation))
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
     #model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
@@ -716,12 +714,19 @@ def main():
         else:
             # Define model for analysis
             early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=1)
-            model = baseline_model(num_variables, learn_rate=learn_rate)
+            model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
+                   num_variables,
+                   optimizer='Nadam',
+                   activation='relu',
+                   dropout_rate=0.0,
+                   init_mode='glorot_normal',
+                   learn_rate=0.001
+
             # Tensorboard
-            logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-            tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+            # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+            # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
             # Fit the model
             # Batch size = examples before updating weights (larger = faster training)
@@ -769,7 +774,7 @@ def main():
     plot_model(model, to_file=model_schematic_name, show_shapes=True,
                       show_layer_names=True, rankdir='TB', expand_nested=True, dpi=96) # rankdir='LR' for horizontal plot
 
-    exit()
+    # exit()
     print('================')
     print('Training event labels: ', len(Y_train))
     print('Training event probs', len(result_probs))

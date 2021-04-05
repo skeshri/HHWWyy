@@ -67,7 +67,7 @@ class apply_DNN(object):
         data = pd.DataFrame(columns=my_cols_list)
         # print "my_cols_list[:-1]: \n",my_cols_list[:-1]
         # print "my_cols_list[:-2]: \n",my_cols_list[:-2]
-        if 'GluGluToHHTo2G4Q_node_cHHH1_2018' in process:
+        if 'GluGluToHHTo2G4Q_node_cHHH1_2017' in process or 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017' in process:
             sampleNames=process
             fileNames = [process]
             target=1
@@ -85,8 +85,12 @@ class apply_DNN(object):
             treename=[
             'GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1',
             ]
+        elif 'QCD' in process:  # datadrivenQCD
+            treename=['Data_13TeV_HHWWggTag_1']
         elif 'GluGluToHHTo2G4Q' in process:
             treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
+        elif 'GluGluToHHTo2G2Z' in process:
+            treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in process:
             treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
         elif 'QCD_Pt-30to40' in process:

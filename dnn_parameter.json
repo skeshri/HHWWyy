@@ -9,9 +9,9 @@
     ],
     "Optimized_FH": [
         {
-            "epochs": 300,
-            "batch_size": 100,
-            "learn_rate": 0.001,
+            "epochs": 10,
+            "batch_size": 250,
+            "learn_rate": 0.0001,
             "optimizer": "Adam"
         }
     ]

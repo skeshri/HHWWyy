@@ -61,8 +61,9 @@ def main():
     process_filename = {
     # 'HHWWgg' : ('HHWWgg-SL-SM-NLO-2017'),
     'HHWWgg' : ('GluGluToHHTo2G4Q_node_cHHH1_2017'),
+    'HHZZgg' : ('GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'),
     'DiPhoton':  ('DiPhotonJetsBox_MGG-80toInf_13TeV'),
-    'datadrivenQCD': ('datadrivenQCD_v2'),
+    'QCD': ('datadrivenQCD_v2'),
     # 'QCD_Pt_30to40': ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
     # 'QCD_Pt_40toInf': ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
     # 'GJet_Pt_20to40': ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
@@ -107,9 +108,11 @@ def main():
         current_sample_name = process_filename.get(process)
         # inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
         # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
-        inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/new/DNN_MoreVar/'
-        if 'HHWWgg' in process:
+        inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
+        if 'HHWWgg' in process or 'HHZZgg' in process:
             inputs_file_path += 'Signal/'
+        elif 'Data' in process:
+            inputs_file_path += 'Data/'
         else:
             inputs_file_path += 'Backgrounds/'
 
@@ -180,6 +183,7 @@ def main():
         print(current_sample_name)
         infile = inputs_file_path+current_sample_name+".root"
         print('<run_network_evaluation> Input file: ', infile)
+        print('current_sample_name: ',current_sample_name)
 
         # Open file and load ttrees
         data_file = TFile.Open(infile)
@@ -187,9 +191,11 @@ def main():
             treename=['GluGluToHHTo2G2Qlnu_node_cHHH1_TuneCP5_PSWeights_13TeV_powheg_pythia8alesauva_2017_1_10_6_4_v0_RunIIFall17MiniAODv2_PU2017_12Apr2018_94X_mc2017_realistic_v14_v1_1c4bfc6d0b8215cc31448570160b99fdUSER']
         elif 'GluGluToHHTo2G4Q' in current_sample_name:
             treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
+        elif 'GluGluToHHTo2G2Z' in current_sample_name:
+            treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in current_sample_name:
             treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
-        elif 'datadrivenQCD' in current_sample_name:
+        elif 'QCD' in current_sample_name:  # datadrivenQCD
             treename=['Data_13TeV_HHWWggTag_1']
         elif 'QCD_Pt-30to40' in current_sample_name:
             treename = [

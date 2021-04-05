@@ -84,7 +84,7 @@ class plotter(object):
     def corrFilter(self, x: pandas.DataFrame, bound: float):
         """
         this function filter the correlated variables as per the value of bound given
-        
+
         :param      x:      dataframe for training
         :type       x:      pandas dataframe
         :param      bound:  value of bound
