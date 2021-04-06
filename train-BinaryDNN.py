@@ -55,7 +55,6 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 
 import shap
 from root_numpy import root2array, tree2array
-from datetime import datetime
 from plotting.plotter import plotter
 # import pydotplus as pydot
 
@@ -738,13 +737,13 @@ def main():
             hyp_param_scan_results.write(time_str+'\n')
             hyp_param_scan_results.write(weights+'\n')
             learn_rate = [0.00001, 0.0001, 0.001, 0.01]
-            epochs = [50]
-            # epochs = [100, 150, 200, 300]
-            batch_size = [60]
-            # batch_size = [60, 100, 200, 250]
+            # epochs = [50]
+            epochs = [100, 150, 200, 300]
+            # batch_size = [60]
+            batch_size = [60, 100, 200, 250]
             num_variables_arr =[num_variables]
-            optimizer = ['Adagrad']
-            # optimizer = ['Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+            # optimizer = ['Adagrad']
+            optimizer = ['Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
             if GridSearch == 1:
                 print("===============================================")
                 print("==       GridSearchCV                        ==")

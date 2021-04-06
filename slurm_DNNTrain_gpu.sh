@@ -48,8 +48,8 @@ date
 # dirTag="March19_WithShap_v1"
 # # Adam, Nadam, Adamax, Adadelta, Adagrad
 # dirTag="March24_ManyVarsAngularVars_QCD_Removal_v7_NewModel_Adagrad"
-dirTag="April2_WWgg_WithoutQCD"
-time(python train-BinaryDNN.py -t 0 -s ${dirTag})
+dirTag="April6_HyperParScan"
+time(python train-BinaryDNN.py -t 1 -s ${dirTag} -p 1 -g 0 -r 1)
 time(python -m json.tool HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised.json > HHWWyyDNN_binary_${dirTag}_BalanceYields/model_serialised_nice.json)
 date
 ##########################################
