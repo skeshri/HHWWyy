@@ -113,8 +113,8 @@ def load_data(inputPath,variables,criteria):
             sampleNames=key
             subdir_name = 'Signal'
             fileNames = [
-            # 'GluGluToHHTo2G4Q_node_cHHH1_2017'
-            'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
+            'GluGluToHHTo2G4Q_node_cHHH1_2017'
+            # 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
             ]
             target=1
         else:
