@@ -122,23 +122,15 @@ def load_data(inputPath,variables,criteria):
             subdir_name = 'Backgrounds'
             fileNames = [
                 # FH File Names
-                # 'DiPhotonJetsBox_M40_80',
                 'DiPhotonJetsBox_MGG-80toInf_13TeV',
-                # 'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                # 'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                # 'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
-                # 'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                # 'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                # 'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+
                 'TTGG_0Jets_TuneCP5_13TeV',
                 'TTGJets_TuneCP5_13TeV',
-                # 'TTJets_TuneCP5_13TeV',
-                # 'DYJetsToLL_M-50_TuneCP5_13TeV',
-                # 'WW_TuneCP5_13TeV-pythia8',
-                'ttHJetToGG_M125_13TeV',
-                'VBFHToGG_M125_13TeV',
-                'GluGluHToGG_M125_TuneCP5_13TeV',
-                'VHToGG_M125_13TeV',
+
+                # 'ttHJetToGG_M125_13TeV',
+                # 'VBFHToGG_M125_13TeV',
+                # 'GluGluHToGG_M125_TuneCP5_13TeV',
+                # 'VHToGG_M125_13TeV',
 
                 'datadrivenQCD_v2'
             ]
@@ -375,14 +367,15 @@ def baseline_model(
     return model
 
 def gscv_model(
-                num_variables,
-                optimizer="Adam",
+                num_variables=35,
+                optimizer="Nadam",
                 activation='relu',
                 init_mode='glorot_normal',
-                learn_rate=0.001
+                learn_rate=0.01,
+                neurons=10
                 ):
     model = Sequential()
-    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(neurons,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     model.add(Dense(10,activation=activation))
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
@@ -744,11 +737,15 @@ def main():
             num_variables_arr =[num_variables]
             # optimizer = ['Adagrad']
             optimizer = ['Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+            init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform']
+            activation = ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
+            neurons = [1, 5, 10, 15, 20, 25, 30, 50, 70]
             if GridSearch == 1:
                 print("===============================================")
                 print("==       GridSearchCV                        ==")
                 print("===============================================")
-                param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
+                # param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr,init_mode=init_mode)
+                param_grid = dict(init_mode=init_mode)
                 model = KerasClassifier(build_fn=gscv_model,verbose=1)
                 grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
                 grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
@@ -771,10 +768,14 @@ def main():
                 print("===============================================")
                 print("==       RandomizedSearchCV                  ==")
                 print("===============================================")
-                param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
-                model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                # param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
+                # param_grid = dict(init_mode=init_mode)
+                # param_grid = dict(activation=activation)
+                param_grid = dict(neurons=neurons)
+                # model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                model = KerasClassifier(build_fn=gscv_model, epochs=300, batch_size=60, verbose=1)
                 # grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
-                grid = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_jobs=-1)
+                grid = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_jobs=-1, verbose=1)
                 grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
                 print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
                 dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
@@ -807,9 +808,10 @@ def main():
             print("\tepochs: ",epochs)
             print("\tbatch_size: ",batch_size)
             print("\tlearn_rate: ",learn_rate)
+            print("\toptimizer: ",optimizer)
 
             # Define model for analysis
-            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=1)
+            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0)
             model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 

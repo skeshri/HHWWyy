@@ -36,12 +36,12 @@ class plotter(object):
 
     def plot_training_progress_acc(self, histories, labels):
         self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10))
-        plt.title('Model Loss')
-        plt.ylabel('Loss')
+        plt.title('Model Loss',fontsize=21)
+        plt.ylabel('Loss',fontsize=21)
         #plt.tick_params(labelsize=15)
         #self.ax1.plot(x1,y1)
         #self.ax1.set_xticklabels(fontsize=15)
-        plt.xlabel('Epoch')
+        plt.xlabel('Epoch',fontsize=21)
         plt.legend(loc='upper right')
         for i in range(len(histories)):
             history1 = histories[i]
@@ -49,7 +49,7 @@ class plotter(object):
             label_name_test = '%s test' % (labels[i])
             plt.plot(history1.history['loss'], label=label_name_train)
             plt.plot(history1.history['val_loss'], label=label_name_test)
-            plt.legend(['train', 'test'], loc='upper right')
+            plt.legend(['train', 'test'], loc='upper right',fontsize=35)
 
         #plt.yticks([2.05,2.10,2.15,2.20,2.25,2.30,2.35,2.40,2.45],labelsize=8)
         acc_title = 'plots/DNN_accuracy_wrt_epoch.png'

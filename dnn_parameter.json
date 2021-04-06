@@ -9,9 +9,9 @@
     ],
     "Optimized_FH": [
         {
-            "epochs": 300,
-            "batch_size": 60,
-            "learn_rate": 0.01,
+            "epochs": 200,
+            "batch_size": 100,
+            "learn_rate": 0.001,
             "optimizer": "Nadam"
         }
     ],
