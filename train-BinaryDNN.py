@@ -36,6 +36,7 @@ from sklearn.metrics import log_loss
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
+from tensorflow.keras import regularizers
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
@@ -52,6 +53,7 @@ from tensorflow.keras.optimizers import Adagrad
 from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import LearningRateScheduler
 
 import shap
 from root_numpy import root2array, tree2array
@@ -335,35 +337,41 @@ def load_trained_model(model_path):
     model = load_model(model_path, compile=False)
     return model
 
+def custom_LearningRate_schedular(epoch):
+    if epoch < 5:
+        return 0.01
+    else:
+        return 0.01 * tf.math.exp(0.1 * (10 - epoch))
+
 def baseline_model(
                    num_variables,
                    optimizer='Nadam',
                    activation='relu',
-                   dropout_rate=0.0,
+                   loss='binary_crossentropy',
+                   dropout_rate=0.2,
                    init_mode='glorot_normal',
                    learn_rate=0.001
                    ):
     # strategy = tf.distribute.MirroredStrategy()
     # with strategy.scope():
     model = Sequential()
-    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
-    # model.add(Dropout(0.2))
+    model.add(Dense(70,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    # model.add(Dropout(dropout_rate))
+    model.add(Dense(35,activation=activation))
+    # model.add(Dropout(dropout_rate))
     model.add(Dense(10,activation=activation))
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
-    #model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
-    #optimizer=Nadam(lr=learn_rate)
-    #model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
     if optimizer=='Adam':
-        model.compile(loss='binary_crossentropy',optimizer=Adam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
     if optimizer=='Nadam':
-        model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
     if optimizer=='Adamax':
-        model.compile(loss='binary_crossentropy',optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
     if optimizer=='Adadelta':
-        model.compile(loss='binary_crossentropy',optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
     if optimizer=='Adagrad':
-        model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
     return model
 
 def gscv_model(
@@ -396,29 +404,26 @@ def new_model(
                optimizer='Nadam',
                activation='relu',
                loss='binary_crossentropy',
-               dropout_rate=0.0,
+               dropout_rate=0.2,
                init_mode='glorot_normal',
                learn_rate=0.001
                ):
     model = Sequential()
-    model.add(Dense(50, input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
-    # model.add(Dense(10, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
-    # model.add(BatchNormalization())
-    model.add(Activation('relu'))
-    #model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(Dense(10, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
-    model.add(Dense(25))
-    # model.add(BatchNormalization())
-    model.add(Activation('relu'))
-    model.add(Dense(12))
+    #model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
+    #model.add(BatchNormalization())
+    #model.add(Activation('relu'))
+    model.add(Dense(10))
+    model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Dense(4))
-    # model.add(BatchNormalization())
+    model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Dense(1, activation="sigmoid"))
     optimizer=Nadam(lr=learn_rate)
-    model.compile(loss=loss,optimizer=optimizer,metrics=['acc'])
+    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
     return model
 
 def check_dir(dir):
@@ -812,18 +817,21 @@ def main():
 
             # Define model for analysis
             early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0)
-            model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
             # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
+            # Learning reate schedular
+            LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular)
+
             # Fit the model
             # Batch size = examples before updating weights (larger = faster training)
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
-            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor])
+            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler])
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
