@@ -2,7 +2,7 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-08 20:44:21
+# @Last Modified time: 2021-04-08 21:28:31
 
 ##
 ## USER MODIFIED STRING
@@ -20,7 +20,7 @@ args = parser.parse_args()
 dirTag=args.dirTag
 MacroPath = '/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/'
 # LogDirPath = "/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/HHWWyyDNN_binary_"+dirTag+"_BalanceYields/"
-LogDirPath = MacroPath + "/HHWWyyDNN_"+dirTag+"_BalanceYields/"
+LogDirPath = MacroPath + "/HHWWyyDNN_binary_"+dirTag+"_"+args.weights+"/"
 
 print ("args.scan: ",args.scan)
 if args.scan:
