@@ -77,12 +77,14 @@ date
 # time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_ZZgg_WithQCD_BalanceYields -p  QCD Data)
 
 
-time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWgg_WithoutQCD_BalanceYields -p  HHZZgg HHWWgg)
-time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWgg_WithQCD_BalanceYields -p  HHZZgg HHWWgg)
-time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWZZgg_WithoutQCD_BalanceYields -p  HHZZgg HHWWgg)
-time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWZZgg_WithQCD_BalanceYields -p  HHZZgg HHWWgg)
-time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_ZZgg_WithoutQCD_BalanceYields -p  HHZZgg HHWWgg)
-time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_ZZgg_WithQCD_BalanceYields -p  HHZZgg HHWWgg)
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWgg_WithoutQCD_BalanceYields -p  HHZZgg HHWWgg)
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWgg_WithQCD_BalanceYields -p  HHZZgg HHWWgg)
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWZZgg_WithoutQCD_BalanceYields -p  HHZZgg HHWWgg)
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_WWZZgg_WithQCD_BalanceYields -p  HHZZgg HHWWgg)
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_ZZgg_WithoutQCD_BalanceYields -p  HHZZgg HHWWgg)
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_ZZgg_WithQCD_BalanceYields -p  HHZZgg HHWWgg)
+
+time(python run_network_evaluation.py -d HHWWyyDNN_HH_QCD_DiPho_E200_v1_BalanceYields -path /hpcfs/bes/mlgpu/sharma/ML_GPU/MultiClassifier/MultiClassifier -p HHWWgg HHZZgg QCD Data DiPhoton  ttHJetToGG_M125_13TeV  VBFHToGG_M125_13TeV  GluGluHToGG_M125_TuneCP5_13TeV   VHToGG_M125_13TeV )
 date
 ##########################################
 # Work load end

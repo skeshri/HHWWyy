@@ -36,6 +36,7 @@ def main():
 
     parser.add_argument('-p', '--processName', dest='processName', help='Process name. List of options in keys of process_filename dictionary', default=[], type=str, nargs='+')
     parser.add_argument('-d', '--modeldir', dest='modeldir', help='Option to choose directory containing trained model')
+    parser.add_argument('-path', '--modeldirPath', dest='modeldirPath', help='Full path of directory where model directory exists.', default="../",type=str)
     parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
 
     args = parser.parse_args()
@@ -47,7 +48,7 @@ def main():
     input_var_jsonFile = ''
 
     # Open and load input variable .json
-    input_var_jsonFile = open('../input_variables.json','r')
+    input_var_jsonFile = open(args.modeldirPath+'/input_variables.json','r')
     variable_list = json.load(input_var_jsonFile,encoding="utf-8").items()
 
     # Append variables to a list of column headers for .csv file later
@@ -90,7 +91,7 @@ def main():
     # print "len(training_columns): ",len(training_columns)
 
     # Load trained model
-    model_name_1 = os.path.join('../',modeldir,'model.h5')
+    model_name_1 = os.path.join(args.modeldirPath,modeldir,'model.h5')
     print('<run_network_evaluation> Using Model: ', model_name_1)
     model_1 = load_model(model_name_1, compile=False)
     # Make instance of plotter class
