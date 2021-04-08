@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-08 23:28:37
+# @Last Modified time: 2021-04-09 00:32:37
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -640,6 +640,21 @@ def main():
         data.to_csv(outputdataframe_name, index=False)
         data = pandas.read_csv(outputdataframe_name)
 
+    print('#---------------------------------------')
+    print('#    Print pandas dataframe            #')
+    print('#---------------------------------------')
+    data.head()
+    print('#---------------------------------------')
+    print('#---------------------------------------')
+    print('#    describe pandas dataframe         #')
+    print('#---------------------------------------')
+    data.describe()
+    print('#---------------------------------------')
+    neg, pos = np.bincount(data['target'])
+    total = neg + pos
+    print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(
+    total, pos, 100 * pos / total))
+    print('#---------------------------------------')
     print('<main> data columns: ', (data.columns.values.tolist()))
     n = len(data)
     nHH = len(data.iloc[data.target.values == 1])
