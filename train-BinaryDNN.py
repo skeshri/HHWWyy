@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-08 21:09:55
+# @Last Modified time: 2021-04-08 23:28:37
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -500,8 +500,14 @@ def main():
     parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
     parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='TEST', type=str)
     parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
-    parent_parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str,choices=['Adam', 'Nadam', 'Adamax', 'Adadelta', 'Adagrad'])
     parent_parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
+
+    parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
+    parent_parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
+    parent_parser.add_argument("-e", "--epochs", type=int, default=200, help = "Number of epochs to train")
+    parent_parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
+    parent_parser.add_argument("-o", "--optimizer", type=str, default="Nadam", help = "Name of optimizer to train with")
+
     parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=False, type=bool)
     parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=False, type=bool)
     parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
@@ -514,8 +520,14 @@ def main():
     print('train_model      = %s'%args.train_model)
     print('suffix           = %s'%args.suffix)
     print('inputs_file_path = %s'%args.inputs_file_path)
-    print('model            = %s'%args.model)
     print('weights          = %s'%args.weights)
+    print('')
+    print('dynamic LearnRate= %s'%args.dynamic_lr)
+    print('Learn rate       = %s'%args.learnRate)
+    print('epochs           = %s'%args.epochs)
+    print('batch_size       = %s'%args.batch_size)
+    print('optimizer        = %s'%args.optimizer)
+    print('')
     print('hyp_param_scan   = %s'%args.hyp_param_scan)
     print('GridSearch       = %s'%args.GridSearch)
     print('RandomSearch     = %s'%args.RandomSearch)
@@ -535,7 +547,7 @@ def main():
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
     weights=args.weights
-    optimizer = args.model
+    optimizer = args.optimizer
     validation_split=0.1
     GridSearch = args.GridSearch
     RandomSearch = args.RandomSearch
@@ -544,30 +556,17 @@ def main():
     output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
     check_dir(output_directory)
 
-    # dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
-    # dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
-    # dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
-    # dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
-    # f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
-    # json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
-    # f_dnn_parameter.close() # close json file
-
-    # Load dnn parameter json file
-    f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
-    dnn_parameter = json.load(f_dnn_parameter)
-    f_dnn_parameter.close()
-
     # hyper-parameter scan results
     if weights == 'BalanceNonWeighted':
-        learn_rate = dnn_parameter['default'][0]['learn_rate']
-        epochs = dnn_parameter['default'][0]['epochs']
-        batch_size=dnn_parameter['default'][0]['batch_size']
-        optimizer=dnn_parameter['default'][0]['optimizer']
+        learn_rate = args.learnRate
+        epochs = args.epochs
+        batch_size= args.batch_size
+        optimizer= args.optimizer
     if weights == 'BalanceYields':
-        learn_rate = dnn_parameter['default'][0]['learn_rate']
-        epochs = dnn_parameter['default'][0]['epochs']
-        batch_size=dnn_parameter['default'][0]['batch_size']
-        optimizer=dnn_parameter['default'][0]['optimizer']
+        learn_rate  = args.learnRate
+        epochs  = args.epochs
+        batch_size= args.batch_size
+        optimizer= args.optimizer
 
     print('---------------------------------------')
     print("Input DNN parameters:")
@@ -878,15 +877,10 @@ def main():
                     hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
             exit()
         else:
-            # Load the updated dnn parameter json file
-            f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
-            dnn_parameter = json.load(f_dnn_parameter)
-            f_dnn_parameter.close()
-            # hyper-parameter scan results
-            learn_rate = dnn_parameter['Optimized_FH'][0]['learn_rate']
-            epochs = dnn_parameter['Optimized_FH'][0]['epochs']
-            batch_size=dnn_parameter['Optimized_FH'][0]['batch_size']
-            optimizer=dnn_parameter['Optimized_FH'][0]['optimizer']
+            learn_rate  = args.learnRate
+            epochs  = args.epochs
+            batch_size= args.batch_size
+            optimizer= args.optimizer
 
             print("DNN parameters: Before traning the model:")
             print("\tepochs: ",epochs)
@@ -897,7 +891,8 @@ def main():
             # Define model for analysis
             early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0) # callbacks
             # Learning rate schedular
-            LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
+            if (args.dynamic_lr):
+                LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
             csv_logger = CSVLogger('%s/training.log'%(output_directory), separator=',', append=True) # callbacks
             # model = ANN_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
@@ -912,7 +907,10 @@ def main():
             # Batch size = examples before updating weights (larger = faster training)
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
-            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
+            if (args.dynamic_lr):
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
+            else:
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)

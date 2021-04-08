@@ -2,7 +2,7 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-08 21:28:31
+# @Last Modified time: 2021-04-08 23:20:53
 
 ##
 ## USER MODIFIED STRING
@@ -14,6 +14,11 @@ parser.add_argument('-d', '--dirTag', dest='dirTag', help='name of directory tag
 parser.add_argument('-j', '--jobName', dest='jobName', help='Slurm job name', default="DNN", type=str)
 parser.add_argument('-s', '--scan', dest='scan', help='do RandomizedSearchCV scan or not', default=False, type=bool)
 parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
+parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
+parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
+parser.add_argument("-e", "--epochs", type=int, default=200, help = "Number of epochs to train")
+parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
+parser.add_argument("-o", "--optimizer", type=str, default="Nadam", help = "Name of optimizer to train with")
 
 args = parser.parse_args()
 
@@ -27,7 +32,7 @@ if args.scan:
   CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
   # CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
 else:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights+" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer
 
 #===================================================================
 import os
@@ -37,7 +42,7 @@ def check_dir(dir):
         os.makedirs(dir)
         os.system("cp dnn_parameter.json "+dir)
 
-check_dir(LogDirPath)
+check_dir(LogDirPath.replace("//","/"))
 
 from datetime import datetime
 CURRENT_DATETIME = datetime.now()
@@ -56,7 +61,7 @@ SlurmJobName = args.jobName+"_"+DateTimeString
 
 print("Name of slurm script: %s"%(SlurmScriptName))
 
-LimitOutTextFile = open(SlurmScriptName, "w")
+LimitOutTextFile = open(LogDirPath.replace("//","/")+"/"+SlurmScriptName, "w")
 message = """#! /bin/bash
 
 ######## Part 1 #########
@@ -123,12 +128,12 @@ sleep 180
 
 """
 
-message = message %(SlurmJobName,LogDirPath,MacroPath,CommandToRun,dirTag,args.weights,dirTag,args.weights)
+message = message %(SlurmJobName,LogDirPath.replace("//","/"),MacroPath,CommandToRun,dirTag,args.weights,dirTag,args.weights)
 
 LimitOutTextFile.write(message+"\n")
 
 LimitOutTextFile.close()
-os.system('cp '+SlurmScriptName+' '+LogDirPath)
-print("Log directory name: %s"%LogDirPath)
+# os.system('cp '+SlurmScriptName+' '+LogDirPath.replace("//","/"))
+print("Log directory name: %s"%LogDirPath.replace("//","/"))
 print("Run slurm script using:")
-print("\tsbatch %s"%SlurmScriptName)
+print("\tsbatch %s/%s"%(LogDirPath.replace("//","/"),SlurmScriptName))
