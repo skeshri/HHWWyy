@@ -5,6 +5,10 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Code to train deep neural network
 # for HH->WWyy analysis.
+import os
+# Next two files are to get rid of warning while traning on IHEP GPU
+import tempfile
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -15,7 +19,6 @@ import time
 import pandas
 import pandas as pd
 import optparse, json, argparse, math
-import os
 from os import environ
 import ROOT
 
@@ -33,6 +36,7 @@ from sklearn.metrics import log_loss
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
+from tensorflow.keras import regularizers
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
@@ -49,12 +53,18 @@ from tensorflow.keras.optimizers import Adagrad
 from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import LearningRateScheduler
 
-# import shap
+import shap
 from root_numpy import root2array, tree2array
-from datetime import datetime
 from plotting.plotter import plotter
 # import pydotplus as pydot
+
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+# exit()
+
+# tf.debugging.set_log_device_placement(True)
+
 
 seed = 7
 np.random.seed(7)
@@ -62,14 +72,14 @@ rng = np.random.RandomState(31337)
 CURRENT_DATETIME = datetime.now()
 
 def GenerateGitPatchAndLog(logFileName,GitPatchName):
-    CMSSWDirPath = os.environ['CMSSW_BASE']
-    CMSSWRel = CMSSWDirPath.split("/")[-1]
+    #CMSSWDirPath = os.environ['CMSSW_BASE']
+    #CMSSWRel = CMSSWDirPath.split("/")[-1]
 
     os.system('git diff > '+GitPatchName)
 
     outScript = open(logFileName,"w");
-    outScript.write('\nCMSSW Version used: '+CMSSWRel+'\n')
-    outScript.write('\nCurrent directory path: '+CMSSWDirPath+'\n')
+    #outScript.write('\nCMSSW Version used: '+CMSSWRel+'\n')
+    #outScript.write('\nCurrent directory path: '+CMSSWDirPath+'\n')
     outScript.close()
 
     os.system('echo -e "\n\n============\n== Latest commit summary \n\n" >> '+logFileName )
@@ -105,7 +115,8 @@ def load_data(inputPath,variables,criteria):
             sampleNames=key
             subdir_name = 'Signal'
             fileNames = [
-            'GluGluToHHTo2G4Q_node_cHHH1_2018'
+            'GluGluToHHTo2G4Q_node_cHHH1_2017'
+            # 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
             ]
             target=1
         else:
@@ -113,33 +124,33 @@ def load_data(inputPath,variables,criteria):
             subdir_name = 'Backgrounds'
             fileNames = [
                 # FH File Names
-                'DiPhotonJetsBox_M40_80',
                 'DiPhotonJetsBox_MGG-80toInf_13TeV',
-                'QCD_Pt-30toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                'QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                'QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
-                'GJet_Pt-20toInf_DoubleEMEnriched_MGG-40to80_TuneCP5_13TeV',
-                'GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV',
-                'GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf',
+
                 'TTGG_0Jets_TuneCP5_13TeV',
                 'TTGJets_TuneCP5_13TeV',
-                'TTJets_TuneCP5_13TeV',
-                'DYJetsToLL_M-50_TuneCP5_13TeV',
-                'WW_TuneCP5_13TeV-pythia8',
-                'ttHJetToGG_M125_13TeV',
-                'VBFHToGG_M125_13TeV',
-                'GluGluHToGG_M125_TuneCP5_13TeV',
-                'VHToGG_M125_13TeV'
+
+                # 'ttHJetToGG_M125_13TeV',
+                # 'VBFHToGG_M125_13TeV',
+                # 'GluGluHToGG_M125_TuneCP5_13TeV',
+                # 'VHToGG_M125_13TeV',
+
+                'datadrivenQCD_v2'
             ]
             target=0
 
         for filen in fileNames:
-            if 'GluGluToHHTo2G2Qlnu_node_cHHH1_2017' in filen:
-                treename=['GluGluToHHTo2G2Qlnu_node_cHHH1_13TeV_HHWWggTag_1_v1']
+            if 'GluGluToHHTo2G4Q_node_cHHH1_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017' in filen:
+                treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
             elif 'GluGluToHHTo2G4Q_node_cHHH1_2018' in filen:
                 treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
+            elif 'datadriven' in filen:
+                treename=['Data_13TeV_HHWWggTag_1']
+                process_ID = 'QCD'
             elif 'GluGluHToGG' in filen:
                 treename=['ggh_125_13TeV_HHWWggTag_1']
                 process_ID = 'Hgg'
@@ -326,25 +337,56 @@ def load_trained_model(model_path):
     model = load_model(model_path, compile=False)
     return model
 
+def custom_LearningRate_schedular(epoch):
+    if epoch < 5:
+        return 0.01
+    else:
+        return 0.01 * tf.math.exp(0.1 * (10 - epoch))
+
 def baseline_model(
                    num_variables,
                    optimizer='Nadam',
                    activation='relu',
-                   dropout_rate=0.0,
+                   loss='binary_crossentropy',
+                   dropout_rate=0.2,
                    init_mode='glorot_normal',
                    learn_rate=0.001
                    ):
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
     model = Sequential()
-    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
-    #model.add(Dense(64,activation=activation))
+    model.add(Dense(70,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    # model.add(Dropout(dropout_rate))
+    model.add(Dense(35,activation=activation))
+    # model.add(Dropout(dropout_rate))
     model.add(Dense(10,activation=activation))
-    # model.add(Dense(16,activation=activation))
-    # model.add(Dense(8,activation=activation))
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
-    #model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
-    #optimizer=Nadam(lr=learn_rate)
-    #model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
+    if optimizer=='Adam':
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Nadam':
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adamax':
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adadelta':
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adagrad':
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+    return model
+
+def gscv_model(
+                num_variables=35,
+                optimizer="Nadam",
+                activation='relu',
+                init_mode='glorot_normal',
+                learn_rate=0.01,
+                neurons=10
+                ):
+    model = Sequential()
+    model.add(Dense(neurons,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(10,activation=activation))
+    model.add(Dense(4,activation=activation))
+    model.add(Dense(1, activation='sigmoid'))
     if optimizer=='Adam':
         model.compile(loss='binary_crossentropy',optimizer=Adam(lr=learn_rate),metrics=['acc'])
     if optimizer=='Nadam':
@@ -357,97 +399,117 @@ def baseline_model(
         model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
     return model
 
-def gscv_model(learn_rate=0.001):
-    model = Sequential()
-    model.add(Dense(32,input_dim=29,kernel_initializer='glorot_normal',activation='relu'))
-    model.add(Dense(16,activation='relu'))
-    model.add(Dense(8,activation='relu'))
-    model.add(Dense(4,activation='relu'))
-    model.add(Dense(1, activation='sigmoid'))
-    #model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
-    optimizer=Nadam(lr=learn_rate)
-    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
-    return model
-
 def new_model(
                num_variables,
                optimizer='Nadam',
                activation='relu',
                loss='binary_crossentropy',
-               dropout_rate=0.0,
+               dropout_rate=0.2,
                init_mode='glorot_normal',
                learn_rate=0.001
                ):
     model = Sequential()
-    model.add(Dense(10, input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
-    # model.add(Dense(10, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
-    # model.add(BatchNormalization())
-    model.add(Activation('relu'))
-    #model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(Dense(10, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
+    #model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
+    #model.add(BatchNormalization())
+    #model.add(Activation('relu'))
     model.add(Dense(10))
-    # model.add(BatchNormalization())
+    model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Dense(4))
-    # model.add(BatchNormalization())
+    model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Dense(1, activation="sigmoid"))
     optimizer=Nadam(lr=learn_rate)
-    model.compile(loss=loss,optimizer=optimizer,metrics=['acc'])
+    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
     return model
 
 def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
         os.makedirs(dir)
+        os.system("cp dnn_parameter.json "+dir)
 
 def main():
     print('Using Keras version: ', keras.__version__)
 
     usage = 'usage: %prog [options]'
-    parser = argparse.ArgumentParser(usage)
-    parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
-    parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
-    parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
-    parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
-    parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
-    args = parser.parse_args()
+    parent_parser = argparse.ArgumentParser(usage)
+    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
+    parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
+    parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
+    parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
+    parent_parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str) # Adam, Nadam, Adamax, Adadelta, Adagrad
+    parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
+    parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=0, type=int)
+    parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
+    args = parent_parser.parse_args()
     do_model_fit = args.train_model
     suffix = args.suffix
 
     # Create instance of the input files directory
     #inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
     #inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
-    inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
-    inputs_file_path = '/Users/ramkrishna/cernbox/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
+    #inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
+    # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
+    # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/new/DNN_MoreVar/'
+    inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
     weights='BalanceYields'# 'BalanceYields' or 'BalanceNonWeighted'
-    optimizer = 'Nadam'
+    optimizer = args.model
     validation_split=0.1
-    # hyper-parameter scan results
-    if weights == 'BalanceNonWeighted':
-        learn_rate = 0.0005
-        epochs = 200
-        batch_size=200
-    if weights == 'BalanceYields':
-        learn_rate = 0.0001
-        epochs = 200
-        batch_size=32
-        #epochs = 10
-        #batch_size=200
+    GridSearch = args.GridSearch
+    RandomSearch = args.RandomSearch
 
     # Create instance of output directory where all results are saved.
     output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
     check_dir(output_directory)
+
+    # dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+    # dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+    # dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+    # dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+    # f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+    # json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+    # f_dnn_parameter.close() # close json file
+
+    # Load dnn parameter json file
+    f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
+    dnn_parameter = json.load(f_dnn_parameter)
+    f_dnn_parameter.close()
+
+    # hyper-parameter scan results
+    if weights == 'BalanceNonWeighted':
+        learn_rate = dnn_parameter['default'][0]['learn_rate']
+        epochs = dnn_parameter['default'][0]['epochs']
+        batch_size=dnn_parameter['default'][0]['batch_size']
+        optimizer=dnn_parameter['default'][0]['optimizer']
+    if weights == 'BalanceYields':
+        learn_rate = dnn_parameter['default'][0]['learn_rate']
+        epochs = dnn_parameter['default'][0]['epochs']
+        batch_size=dnn_parameter['default'][0]['batch_size']
+        optimizer=dnn_parameter['default'][0]['optimizer']
+
+    print("Input DNN parameters:")
+    print("\tepochs: ",epochs)
+    print("\tbatch_size: ",batch_size)
+    print("\tlearn_rate: ",learn_rate)
+    print("\toptimizer: ",optimizer)
+
     """
     Before we start save git patch. This will be helpful in debug the code later or taking care of the differences between many traning directory.
     """
     LogdirName= "gitLog_"+(str(CURRENT_DATETIME.year)[-2:]
               +str(format(CURRENT_DATETIME.month,'02d'))
               +str(format(CURRENT_DATETIME.day,'02d'))
+              +"_"
+              +str(format(CURRENT_DATETIME.hour,'02d'))
+              +str(format(CURRENT_DATETIME.minute,'02d'))
+              +str(format(CURRENT_DATETIME.second,'02d'))
               )
     GenerateGitPatchAndLog(LogdirName+".log",LogdirName+".patch")
     os.system('mv '+LogdirName+".log "+LogdirName+".patch "+output_directory)
@@ -495,7 +557,9 @@ def main():
         # Change sentinal value to speed up training.
         # data = data.mask(data<-25., -9.)
         # data = data.loc[data<-25.]
-        # data = data.replace(to_replace=-99.,value=-9.0)
+        data = data.replace(to_replace=-99.,value=-9.0)
+        data = data.replace(to_replace=-999.,value=-9.0)
+        data = data.replace(to_replace=-9999.,value=-9.0)
         # data[data < -25.] = -9.0
         data.to_csv(outputdataframe_name, index=False)
         data = pandas.read_csv(outputdataframe_name)
@@ -647,6 +711,10 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.png')
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.pdf')
 
+    print(Plotter.corrFilter(train_df, .15))
+
+    # exit()
+
     # Fit label encoder to Y_train
     newencoder = LabelEncoder()
     newencoder.fit(Y_train)
@@ -661,42 +729,109 @@ def main():
 
         if hyp_param_scan == 1:
             print('Begin at local time: ', time.localtime())
-            hyp_param_scan_name = 'hyp_param_scan_results.txt'
+            hyp_param_scan_name = output_directory+'/hyp_param_scan_results.txt'
             hyp_param_scan_results = open(hyp_param_scan_name,'a')
             time_str = str(time.localtime())+'\n'
-            hyp_param_scan_results.write(time_str)
-            hyp_param_scan_results.write(weights)
-            learn_rates=[0.00001, 0.0001]
-            epochs = [150,200]
-            batch_size = [400,500]
-            param_grid = dict(learn_rate=learn_rates,epochs=epochs,batch_size=batch_size)
-            model = KerasClassifier(build_fn=gscv_model,verbose=0)
-            grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
-            grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
-            print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
-            hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
-            means = grid_result.cv_results_['mean_test_score']
-            stds = grid_result.cv_results_['std_test_score']
-            params = grid_result.cv_results_['params']
-            for mean, stdev, param in zip(means, stds, params):
-                print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
-                hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
+            hyp_param_scan_results.write(time_str+'\n')
+            hyp_param_scan_results.write(weights+'\n')
+            learn_rate = [0.00001, 0.0001, 0.001, 0.01]
+            # epochs = [50]
+            epochs = [100, 150, 200, 300]
+            # batch_size = [60]
+            batch_size = [60, 100, 200, 250]
+            num_variables_arr =[num_variables]
+            # optimizer = ['Adagrad']
+            optimizer = ['Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+            init_mode = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform']
+            activation = ['softmax', 'softplus', 'softsign', 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear']
+            neurons = [1, 5, 10, 15, 20, 25, 30, 50, 70]
+            if GridSearch == 1:
+                print("===============================================")
+                print("==       GridSearchCV                        ==")
+                print("===============================================")
+                # param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr,init_mode=init_mode)
+                param_grid = dict(init_mode=init_mode)
+                model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+                grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
+                print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
+                dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+                dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+                dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+                dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+                f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+                json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+                f_dnn_parameter.close() # close json file
+                hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
+                means = grid_result.cv_results_['mean_test_score']
+                stds = grid_result.cv_results_['std_test_score']
+                params = grid_result.cv_results_['params']
+                for mean, stdev, param in zip(means, stds, params):
+                    print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
+                    hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
+            elif RandomSearch == 1:
+                print("===============================================")
+                print("==       RandomizedSearchCV                  ==")
+                print("===============================================")
+                # param_grid = dict(learn_rate=learn_rate,epochs=epochs,batch_size=batch_size,optimizer=optimizer,num_variables=num_variables_arr)
+                # param_grid = dict(init_mode=init_mode)
+                # param_grid = dict(activation=activation)
+                param_grid = dict(neurons=neurons)
+                # model = KerasClassifier(build_fn=gscv_model,verbose=1)
+                model = KerasClassifier(build_fn=gscv_model, epochs=300, batch_size=60, verbose=1)
+                # grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+                grid = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_jobs=-1, verbose=1)
+                grid_result = grid.fit(X_train,Y_train,shuffle=True,sample_weight=trainingweights)
+                print("Best score: %f , best params: %s" % (grid_result.best_score_,grid_result.best_params_))
+                dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
+                dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
+                dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
+                dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
+                f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
+                json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
+                f_dnn_parameter.close() # close json file
+                hyp_param_scan_results.write("Best score: %f , best params: %s\n" %(grid_result.best_score_,grid_result.best_params_))
+                means = grid_result.cv_results_['mean_test_score']
+                stds = grid_result.cv_results_['std_test_score']
+                params = grid_result.cv_results_['params']
+                for mean, stdev, param in zip(means, stds, params):
+                    print("Mean (stdev) test score: %f (%f) with parameters: %r" % (mean,stdev,param))
+                    hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
             exit()
         else:
+            # Load the updated dnn parameter json file
+            f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
+            dnn_parameter = json.load(f_dnn_parameter)
+            f_dnn_parameter.close()
+            # hyper-parameter scan results
+            learn_rate = dnn_parameter['Optimized_FH'][0]['learn_rate']
+            epochs = dnn_parameter['Optimized_FH'][0]['epochs']
+            batch_size=dnn_parameter['Optimized_FH'][0]['batch_size']
+            optimizer=dnn_parameter['Optimized_FH'][0]['optimizer']
+
+            print("DNN parameters: Before traning the model:")
+            print("\tepochs: ",epochs)
+            print("\tbatch_size: ",batch_size)
+            print("\tlearn_rate: ",learn_rate)
+            print("\toptimizer: ",optimizer)
+
             # Define model for analysis
-            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=1)
-            model = baseline_model(num_variables, learn_rate=learn_rate)
-            # model = new_model(num_variables, learn_rate=learn_rate)
-            
+            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0)
+            # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+
             # Tensorboard
-            logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-            tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+            # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+            # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
+
+            # Learning reate schedular
+            LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular)
 
             # Fit the model
             # Batch size = examples before updating weights (larger = faster training)
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
-            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor])
+            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler])
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
@@ -715,14 +850,14 @@ def main():
 
     # Node probabilities for training sample events
     result_probs = model.predict(np.array(X_train))
-    result_classes = model.predict_classes(np.array(X_train))
+    # result_classes = model.predict_classes(np.array(X_train))
     # model.predict_classes is going to be deprecated.. so one should use np.argmax
-    # result_classes = np.argmax(model.predict(np.array(X_train)), axis=-1)
+    result_classes = np.argmax(model.predict(np.array(X_train)), axis=-1)
 
     # Node probabilities for testing sample events
     result_probs_test = model.predict(np.array(X_test))
-    result_classes_test = model.predict_classes(np.array(X_test))
-    # result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
+    # result_classes_test = model.predict_classes(np.array(X_test))
+    result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
 
     # Store model in file
     model_output_name = os.path.join(output_directory,'model.h5')
@@ -734,9 +869,11 @@ def main():
     with open(model_json_name,'w') as json_file:
         json_file.write(model_json)
     model.summary()
-    # model_schematic_name = os.path.join(output_directory,'model_schematic.eps')
-    # plot_model(model, to_file=model_schematic_name, show_shapes=True, show_layer_names=True)
+    model_schematic_name = os.path.join(output_directory,'model_schematic.png')
+    plot_model(model, to_file=model_schematic_name, show_shapes=True,
+                      show_layer_names=True, rankdir='TB', expand_nested=True, dpi=96) # rankdir='LR' for horizontal plot
 
+    # exit()
     print('================')
     print('Training event labels: ', len(Y_train))
     print('Training event probs', len(result_probs))
@@ -756,6 +893,7 @@ def main():
     Plotter.ROC(model, X_test, Y_test, X_train, Y_train)
     Plotter.save_plots(dir=plots_dir, filename='ROC.png')
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
+
 
     import shap
     # from tensorflow.compat.v1.keras.backend import get_session

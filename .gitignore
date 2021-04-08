@@ -1,7 +1,11 @@
 *.pyc
+core.*
+*.out
 *.txt
 HHWWyy*/
 logs/
 *.root
 .DS_Store
 .ipynb_checkpoints/
+old_tranings/
+slurm_submit_*.sh

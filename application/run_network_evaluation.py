@@ -1,3 +1,7 @@
+import os
+# Next two files are to get rid of warning while traning on IHEP GPU
+import tempfile
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 from apply_DNN import apply_DNN
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,9 +11,10 @@ import pandas as pd
 import optparse, json, argparse, subprocess
 import ROOT
 import sys
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 from array import array
-sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+# sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+sys.path.insert(0, '/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/')
 from plotting.plotter import plotter
 from ROOT import TFile, TTree, gDirectory, gPad
 from sklearn.preprocessing import LabelEncoder
@@ -20,7 +25,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import class_weight
-import os
 from os import environ
 
 def main():
@@ -56,12 +60,14 @@ def main():
     # Dictionary of filenames to be run over along with their keys.
     process_filename = {
     # 'HHWWgg' : ('HHWWgg-SL-SM-NLO-2017'),
-    'HHWWgg' : ('GluGluToHHTo2G4Q_node_cHHH1_2018'),
+    'HHWWgg' : ('GluGluToHHTo2G4Q_node_cHHH1_2017'),
+    'HHZZgg' : ('GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'),
     'DiPhoton':  ('DiPhotonJetsBox_MGG-80toInf_13TeV'),
-    'QCD_Pt_30to40': ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
-    'QCD_Pt_40toInf': ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
-    'GJet_Pt_20to40': ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
-    'GJet_Pt_40toInf': ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    'QCD': ('datadrivenQCD_v2'),
+    # 'QCD_Pt_30to40': ('QCD_Pt-30to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+    # 'QCD_Pt_40toInf': ('QCD_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
+    # 'GJet_Pt_20to40': ('GJet_Pt-20to40_DoubleEMEnriched_MGG-80toInf_TuneCP5_13TeV'),
+    # 'GJet_Pt_40toInf': ('GJet_Pt-40toInf_DoubleEMEnriched_MGG-80toInf'),
     'TTGG': ('TTGG_0Jets_TuneCP5_13TeV'),
     'TTGJets': ('TTGJets_TuneCP5_13TeV'),
     'TTJets': ('TTJets_TuneCP5_13TeV'),
@@ -70,10 +76,10 @@ def main():
     'ttHJetToGG_M125_13TeV': ('ttHJetToGG_M125_13TeV'),
     'VBFHToGG_M125_13TeV': ('VBFHToGG_M125_13TeV'),
     'GluGluHToGG_M125_TuneCP5_13TeV': ('GluGluHToGG_M125_TuneCP5_13TeV'),
-    'VHToGG_M125_13TeV': ('VHToGG_M125_13TeV')
+    'VHToGG_M125_13TeV': ('VHToGG_M125_13TeV'),
 
     # 'ttHJetToGG' : ('ttHJetToGG_M125_13TeV_amcatnloFXFX_madspin_pythia8_Hadded')
-    #'Data' : ('Data_'+JESname+region)
+    'Data' : ('allData')
     }
 
     training_columns = column_headers[:-2]
@@ -100,9 +106,13 @@ def main():
     for process in processes:
         print('<run_network_evaluation> Process: ', process)
         current_sample_name = process_filename.get(process)
-        inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
-        if 'HHWWgg' in process:
+        # inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
+        # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
+        inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
+        if 'HHWWgg' in process or 'HHZZgg' in process:
             inputs_file_path += 'Signal/'
+        elif 'Data' in process:
+            inputs_file_path += 'Data/'
         else:
             inputs_file_path += 'Backgrounds/'
 
@@ -117,7 +127,7 @@ def main():
             os.makedirs(samples_final_path_dir)
 
         dataframe_name = '%s/%s_dataframe.csv' %(samples_final_path_dir,process)
-        print "dataframe_name: ",dataframe_name
+        print ("dataframe_name: ",dataframe_name)
         if os.path.isfile(dataframe_name) and (args.load_dataset == 0):
             print('<run_network_evaluation> Loading %s . . . . ' % dataframe_name)
             data = pandas.read_csv(dataframe_name)
@@ -142,7 +152,7 @@ def main():
         print("<run_network_evaluation> Total length of HH = %i, bckg = %i" % (nHH, nbckg))
 
         # Create dataset from dataframe to evaluate DNN
-        print "training_columns.shape: ",len(training_columns)
+        print ("training_columns.shape: ",len(training_columns))
         X_test = data[training_columns].values
         # print "X_test.shape:\n",X_test.shape
         # print "X_test:\n",X_test
@@ -173,6 +183,7 @@ def main():
         print(current_sample_name)
         infile = inputs_file_path+current_sample_name+".root"
         print('<run_network_evaluation> Input file: ', infile)
+        print('current_sample_name: ',current_sample_name)
 
         # Open file and load ttrees
         data_file = TFile.Open(infile)
@@ -180,8 +191,12 @@ def main():
             treename=['GluGluToHHTo2G2Qlnu_node_cHHH1_TuneCP5_PSWeights_13TeV_powheg_pythia8alesauva_2017_1_10_6_4_v0_RunIIFall17MiniAODv2_PU2017_12Apr2018_94X_mc2017_realistic_v14_v1_1c4bfc6d0b8215cc31448570160b99fdUSER']
         elif 'GluGluToHHTo2G4Q' in current_sample_name:
             treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
+        elif 'GluGluToHHTo2G2Z' in current_sample_name:
+            treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in current_sample_name:
             treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
+        elif 'QCD' in current_sample_name:  # datadrivenQCD
+            treename=['Data_13TeV_HHWWggTag_1']
         elif 'QCD_Pt-30to40' in current_sample_name:
             treename = [
                 'QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
@@ -288,6 +303,10 @@ def main():
         elif 'VHToGG' in current_sample_name:
             treename = [
                 'wzh_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'Data' in current_sample_name:
+            treename = [
+                'Data_13TeV_HHWWggTag_1'
             ]
         else:
             print('<run_network_evaluation> Warning: Process name not recognised. Exiting.',current_sample_name)

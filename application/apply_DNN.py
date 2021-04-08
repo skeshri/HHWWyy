@@ -28,7 +28,8 @@ from keras.callbacks import EarlyStopping
 from root_numpy import root2array, tree2array
 
 # python looks here for its packages: $PYTHONPATH. Need to add path to $PYTHONPATH so python can find the required packages.
-sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+# sys.path.insert(0, '/afs/cern.ch/user/r/rasharma/work/doubleHiggs/deepLearning/CMSSW_11_1_8/src/HHWWyy/')
+sys.path.insert(0, '/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/')
 from plotting.plotter import plotter
 
 class apply_DNN(object):
@@ -66,8 +67,7 @@ class apply_DNN(object):
         data = pd.DataFrame(columns=my_cols_list)
         # print "my_cols_list[:-1]: \n",my_cols_list[:-1]
         # print "my_cols_list[:-2]: \n",my_cols_list[:-2]
-        if 'GluGluToHHTo2G4Q_node_cHHH1_2018' in process:
-            print "Signal..."
+        if 'GluGluToHHTo2G4Q_node_cHHH1_2017' in process or 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017' in process:
             sampleNames=process
             fileNames = [process]
             target=1
@@ -85,8 +85,12 @@ class apply_DNN(object):
             treename=[
             'GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1',
             ]
+        elif 'QCD' in process:  # datadrivenQCD
+            treename=['Data_13TeV_HHWWggTag_1']
         elif 'GluGluToHHTo2G4Q' in process:
             treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
+        elif 'GluGluToHHTo2G2Z' in process:
+            treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
         elif 'DiPhotonJetsBox_MGG' in process:
             treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1']
         elif 'QCD_Pt-30to40' in process:
@@ -94,7 +98,6 @@ class apply_DNN(object):
                 'QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
             ]
         elif 'QCD_Pt-40toInf' in process:
-            print "DEBUG: QCD_Pt-40toInf"
             treename = [
                 'QCD_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1'
             ]
@@ -196,6 +199,10 @@ class apply_DNN(object):
         elif 'VHToGG' in process:
             treename = [
                 'wzh_125_13TeV_HHWWggTag_1'
+            ]
+        elif 'Data' in process:
+            treename = [
+                'Data_13TeV_HHWWggTag_1'
             ]
 
         filename_fullpath = inputPath+"/"+process+".root"
