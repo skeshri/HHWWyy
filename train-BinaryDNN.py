@@ -129,10 +129,10 @@ def load_data(inputPath,variables,criteria):
                 'TTGG_0Jets_TuneCP5_13TeV',
                 'TTGJets_TuneCP5_13TeV',
 
-                # 'ttHJetToGG_M125_13TeV',
-                # 'VBFHToGG_M125_13TeV',
-                # 'GluGluHToGG_M125_TuneCP5_13TeV',
-                # 'VHToGG_M125_13TeV',
+                'ttHJetToGG_M125_13TeV',
+                'VBFHToGG_M125_13TeV',
+                'GluGluHToGG_M125_TuneCP5_13TeV',
+                'VHToGG_M125_13TeV',
 
                 'datadrivenQCD_v2'
             ]
@@ -459,7 +459,7 @@ def main():
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
-    weights='BalanceYields'# 'BalanceYields' or 'BalanceNonWeighted'
+    weights='BalanceNonWeighted'# 'BalanceYields' or 'BalanceNonWeighted'
     optimizer = args.model
     validation_split=0.1
     GridSearch = args.GridSearch
@@ -584,91 +584,93 @@ def main():
     weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
     weights_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'weight']
     weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
-    weights_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'weight']
+    # weights_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'weight']
     weights_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'weight']
-    weights_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'weight']
+    # weights_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'weight']
     weights_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'weight']
-    weights_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'weight']
-    weights_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'weight']
+    # weights_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'weight']
+    # weights_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'weight']
 
     HHsum_weighted= sum(weights_for_HH)
     Hggsum_weighted= sum(weights_for_Hgg)
     DiPhotonsum_weighted= sum(weights_for_DiPhoton)
-    GJetsum_weighted= sum(weights_for_GJet)
+    # GJetsum_weighted= sum(weights_for_GJet)
     QCDsum_weighted= sum(weights_for_QCD)
-    DYsum_weighted= sum(weights_for_DY)
+    # DYsum_weighted= sum(weights_for_DY)
     TTGsJetssum_weighted= sum(weights_for_TTGsJets)
-    WGsJetssum_weighted= sum(weights_for_WGsJets)
-    WWsum_weighted= sum(weights_for_WW)
-    bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
+    # WGsJetssum_weighted= sum(weights_for_WGsJets)
+    # WWsum_weighted= sum(weights_for_WW)
+    # bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
+    bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted
     #bckgsum_weighted = DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
 
     nevents_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'unweighted']
     nevents_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'unweighted']
     nevents_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'unweighted']
-    nevents_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'unweighted']
+    # nevents_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'unweighted']
     nevents_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'unweighted']
-    nevents_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'unweighted']
+    # nevents_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'unweighted']
     nevents_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'unweighted']
-    nevents_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'unweighted']
-    nevents_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'unweighted']
+    # nevents_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'unweighted']
+    # nevents_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'unweighted']
 
     HHsum_unweighted= sum(nevents_for_HH)
     Hggsum_unweighted= sum(nevents_for_Hgg)
     DiPhotonsum_unweighted= sum(nevents_for_DiPhoton)
-    GJetsum_unweighted= sum(nevents_for_GJet)
+    # GJetsum_unweighted= sum(nevents_for_GJet)
     QCDsum_unweighted= sum(nevents_for_QCD)
-    DYsum_unweighted= sum(nevents_for_DY)
+    # DYsum_unweighted= sum(nevents_for_DY)
     TTGsJetssum_unweighted= sum(nevents_for_TTGsJets)
-    WGsJetssum_unweighted= sum(nevents_for_WGsJets)
-    WWsum_unweighted= sum(nevents_for_WW)
-    bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
+    # WGsJetssum_unweighted= sum(nevents_for_WGsJets)
+    # WWsum_unweighted= sum(nevents_for_WW)
+    # bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
+    bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted
     #bckgsum_unweighted = DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
 
-    HHsum_weighted = 2*HHsum_weighted
-    HHsum_unweighted = 2*HHsum_unweighted
+    # HHsum_weighted = 2*HHsum_weighted
+    # HHsum_unweighted = 2*HHsum_unweighted
 
     if weights=='BalanceYields':
         print('HHsum_weighted= ' , HHsum_weighted)
         print('Hggsum_weighted= ' , Hggsum_weighted)
         print('DiPhotonsum_weighted= ', DiPhotonsum_weighted)
-        print('GJetsum_weighted= ', GJetsum_weighted)
+        # print('GJetsum_weighted= ', GJetsum_weighted)
         print('QCDsum_weighted= ', QCDsum_weighted)
-        print('DYsum_weighted= ', DYsum_weighted)
+        # print('DYsum_weighted= ', DYsum_weighted)
         print('TTGsJetssum_weighted= ', TTGsJetssum_weighted)
-        print('WGsJetssum_weighted= ', WGsJetssum_weighted)
-        print('WWsum_weighted= ', WWsum_weighted)
+        # print('WGsJetssum_weighted= ', WGsJetssum_weighted)
+        # print('WWsum_weighted= ', WWsum_weighted)
         print('bckgsum_weighted= ', bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = HHsum_unweighted/HHsum_weighted
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
 
     if weights=='BalanceNonWeighted':
         print('HHsum_unweighted= ' , HHsum_unweighted)
         print('Hggsum_unweighted= ' , Hggsum_unweighted)
         print('DiPhotonsum_unweighted= ', DiPhotonsum_unweighted)
-        print('GJetsum_unweighted= ', GJetsum_unweighted)
+        # print('GJetsum_unweighted= ', GJetsum_unweighted)
         print('QCDsum_unweighted= ', QCDsum_unweighted)
-        print('DYsum_unweighted= ', DYsum_unweighted)
+        # print('DYsum_unweighted= ', DYsum_unweighted)
         print('TTGsJetssum_unweighted= ', TTGsJetssum_unweighted)
-        print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
-        print('WWsum_unweighted= ', WWsum_unweighted)
+        # print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
+        # print('WWsum_unweighted= ', WWsum_unweighted)
         print('bckgsum_unweighted= ', bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = 1.
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
 
 
     # Remove column headers that aren't input variables
