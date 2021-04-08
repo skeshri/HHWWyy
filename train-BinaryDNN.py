@@ -5,6 +5,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Code to train deep neural network
 # for HH->WWyy analysis.
+# @Last Modified by:   Ram Krishna Sharma
+# @Last Modified time: 2021-04-09 00:32:37
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -54,6 +56,7 @@ from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import LearningRateScheduler
+from tensorflow.keras.callbacks import CSVLogger
 
 import shap
 from root_numpy import root2array, tree2array
@@ -129,10 +132,10 @@ def load_data(inputPath,variables,criteria):
                 'TTGG_0Jets_TuneCP5_13TeV',
                 'TTGJets_TuneCP5_13TeV',
 
-                # 'ttHJetToGG_M125_13TeV',
-                # 'VBFHToGG_M125_13TeV',
-                # 'GluGluHToGG_M125_TuneCP5_13TeV',
-                # 'VHToGG_M125_13TeV',
+                'ttHJetToGG_M125_13TeV',
+                'VBFHToGG_M125_13TeV',
+                'GluGluHToGG_M125_TuneCP5_13TeV',
+                'VHToGG_M125_13TeV',
 
                 'datadrivenQCD_v2'
             ]
@@ -337,11 +340,38 @@ def load_trained_model(model_path):
     model = load_model(model_path, compile=False)
     return model
 
-def custom_LearningRate_schedular(epoch):
-    if epoch < 5:
-        return 0.01
+def custom_LearningRate_schedular(epoch,lr):
+    if epoch < 10:
+        return 0.1
     else:
-        return 0.01 * tf.math.exp(0.1 * (10 - epoch))
+        return 0.1 * tf.math.exp(0.1 * (10 - epoch))
+
+def ANN_model(
+                   num_variables,
+                   optimizer='Nadam',
+                   activation='relu',
+                   loss='binary_crossentropy',
+                   dropout_rate=0.2,
+                   init_mode='glorot_normal',
+                   learn_rate=0.001
+                   ):
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
+    model = Sequential()
+    # model.add(Dense(num_variables,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(1, activation='sigmoid'))
+    if optimizer=='Adam':
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Nadam':
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adamax':
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adadelta':
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adagrad':
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+    return model
 
 def baseline_model(
                    num_variables,
@@ -358,6 +388,35 @@ def baseline_model(
     model.add(Dense(70,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     # model.add(Dropout(dropout_rate))
     model.add(Dense(35,activation=activation))
+    # model.add(Dropout(dropout_rate))
+    model.add(Dense(10,activation=activation))
+    model.add(Dense(4,activation=activation))
+    model.add(Dense(1, activation='sigmoid'))
+    if optimizer=='Adam':
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Nadam':
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adamax':
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adadelta':
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adagrad':
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+    return model
+
+def baseline_model2(
+                   num_variables,
+                   optimizer='Nadam',
+                   activation='relu',
+                   loss='binary_crossentropy',
+                   dropout_rate=0.2,
+                   init_mode='glorot_normal',
+                   learn_rate=0.001
+                   ):
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
+    model = Sequential()
+    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     # model.add(Dropout(dropout_rate))
     model.add(Dense(10,activation=activation))
     model.add(Dense(4,activation=activation))
@@ -437,30 +496,58 @@ def main():
 
     usage = 'usage: %prog [options]'
     parent_parser = argparse.ArgumentParser(usage)
-    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
-    parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
-    parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
+    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=False, type=bool)
+    parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
+    parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='TEST', type=str)
     parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
-    parent_parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str) # Adam, Nadam, Adamax, Adadelta, Adagrad
-    parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
-    parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=0, type=int)
-    parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
+    parent_parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
+
+    parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
+    parent_parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
+    parent_parser.add_argument("-e", "--epochs", type=int, default=200, help = "Number of epochs to train")
+    parent_parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
+    parent_parser.add_argument("-o", "--optimizer", type=str, default="Nadam", help = "Name of optimizer to train with")
+
+    parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=False, type=bool)
+    parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=False, type=bool)
+    parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
     args = parent_parser.parse_args()
+
+    print('#---------------------------------------')
+    print('#    Print all input arguments         #')
+    print('#---------------------------------------')
+    print('load_dataset     = %s'%args.load_dataset)
+    print('train_model      = %s'%args.train_model)
+    print('suffix           = %s'%args.suffix)
+    print('inputs_file_path = %s'%args.inputs_file_path)
+    print('weights          = %s'%args.weights)
+    print('')
+    print('dynamic LearnRate= %s'%args.dynamic_lr)
+    print('Learn rate       = %s'%args.learnRate)
+    print('epochs           = %s'%args.epochs)
+    print('batch_size       = %s'%args.batch_size)
+    print('optimizer        = %s'%args.optimizer)
+    print('')
+    print('hyp_param_scan   = %s'%args.hyp_param_scan)
+    print('GridSearch       = %s'%args.GridSearch)
+    print('RandomSearch     = %s'%args.RandomSearch)
+    print('---------------------------------------')
+
+
     do_model_fit = args.train_model
     suffix = args.suffix
 
     # Create instance of the input files directory
-    #inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
-    #inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
-    #inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
-    # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
-    # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/new/DNN_MoreVar/'
-    inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
+    # inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
+    # SL Lxplus = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
+    # FH Lxplus = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN_MoreVar_v2/'
+    # FH IHEP = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
+    inputs_file_path = args.inputs_file_path
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
-    weights='BalanceYields'# 'BalanceYields' or 'BalanceNonWeighted'
-    optimizer = args.model
+    weights=args.weights
+    optimizer = args.optimizer
     validation_split=0.1
     GridSearch = args.GridSearch
     RandomSearch = args.RandomSearch
@@ -469,36 +556,25 @@ def main():
     output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
     check_dir(output_directory)
 
-    # dnn_parameter['Optimized_FH'][0]['epochs'] = grid_result.best_params_['epochs']
-    # dnn_parameter['Optimized_FH'][0]['batch_size'] = grid_result.best_params_['batch_size']
-    # dnn_parameter['Optimized_FH'][0]['learn_rate'] = grid_result.best_params_['learn_rate']
-    # dnn_parameter['Optimized_FH'][0]['optimizer'] = grid_result.best_params_['optimizer']
-    # f_dnn_parameter = open(output_directory+"/dnn_parameter.json", "w")   # open json file
-    # json.dump(dnn_parameter, f_dnn_parameter, indent=4, sort_keys=False)   # update json file
-    # f_dnn_parameter.close() # close json file
-
-    # Load dnn parameter json file
-    f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
-    dnn_parameter = json.load(f_dnn_parameter)
-    f_dnn_parameter.close()
-
     # hyper-parameter scan results
     if weights == 'BalanceNonWeighted':
-        learn_rate = dnn_parameter['default'][0]['learn_rate']
-        epochs = dnn_parameter['default'][0]['epochs']
-        batch_size=dnn_parameter['default'][0]['batch_size']
-        optimizer=dnn_parameter['default'][0]['optimizer']
+        learn_rate = args.learnRate
+        epochs = args.epochs
+        batch_size= args.batch_size
+        optimizer= args.optimizer
     if weights == 'BalanceYields':
-        learn_rate = dnn_parameter['default'][0]['learn_rate']
-        epochs = dnn_parameter['default'][0]['epochs']
-        batch_size=dnn_parameter['default'][0]['batch_size']
-        optimizer=dnn_parameter['default'][0]['optimizer']
+        learn_rate  = args.learnRate
+        epochs  = args.epochs
+        batch_size= args.batch_size
+        optimizer= args.optimizer
 
+    print('---------------------------------------')
     print("Input DNN parameters:")
     print("\tepochs: ",epochs)
     print("\tbatch_size: ",batch_size)
     print("\tlearn_rate: ",learn_rate)
     print("\toptimizer: ",optimizer)
+    print('---------------------------------------')
 
     """
     Before we start save git patch. This will be helpful in debug the code later or taking care of the differences between many traning directory.
@@ -564,6 +640,21 @@ def main():
         data.to_csv(outputdataframe_name, index=False)
         data = pandas.read_csv(outputdataframe_name)
 
+    print('#---------------------------------------')
+    print('#    Print pandas dataframe            #')
+    print('#---------------------------------------')
+    data.head()
+    print('#---------------------------------------')
+    print('#---------------------------------------')
+    print('#    describe pandas dataframe         #')
+    print('#---------------------------------------')
+    data.describe()
+    print('#---------------------------------------')
+    neg, pos = np.bincount(data['target'])
+    total = neg + pos
+    print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(
+    total, pos, 100 * pos / total))
+    print('#---------------------------------------')
     print('<main> data columns: ', (data.columns.values.tolist()))
     n = len(data)
     nHH = len(data.iloc[data.target.values == 1])
@@ -584,91 +675,93 @@ def main():
     weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
     weights_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'weight']
     weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
-    weights_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'weight']
+    # weights_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'weight']
     weights_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'weight']
-    weights_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'weight']
+    # weights_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'weight']
     weights_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'weight']
-    weights_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'weight']
-    weights_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'weight']
+    # weights_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'weight']
+    # weights_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'weight']
 
     HHsum_weighted= sum(weights_for_HH)
     Hggsum_weighted= sum(weights_for_Hgg)
     DiPhotonsum_weighted= sum(weights_for_DiPhoton)
-    GJetsum_weighted= sum(weights_for_GJet)
+    # GJetsum_weighted= sum(weights_for_GJet)
     QCDsum_weighted= sum(weights_for_QCD)
-    DYsum_weighted= sum(weights_for_DY)
+    # DYsum_weighted= sum(weights_for_DY)
     TTGsJetssum_weighted= sum(weights_for_TTGsJets)
-    WGsJetssum_weighted= sum(weights_for_WGsJets)
-    WWsum_weighted= sum(weights_for_WW)
-    bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
+    # WGsJetssum_weighted= sum(weights_for_WGsJets)
+    # WWsum_weighted= sum(weights_for_WW)
+    # bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
+    bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted
     #bckgsum_weighted = DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
 
     nevents_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'unweighted']
     nevents_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'unweighted']
     nevents_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'unweighted']
-    nevents_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'unweighted']
+    # nevents_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'unweighted']
     nevents_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'unweighted']
-    nevents_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'unweighted']
+    # nevents_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'unweighted']
     nevents_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'unweighted']
-    nevents_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'unweighted']
-    nevents_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'unweighted']
+    # nevents_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'unweighted']
+    # nevents_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'unweighted']
 
     HHsum_unweighted= sum(nevents_for_HH)
     Hggsum_unweighted= sum(nevents_for_Hgg)
     DiPhotonsum_unweighted= sum(nevents_for_DiPhoton)
-    GJetsum_unweighted= sum(nevents_for_GJet)
+    # GJetsum_unweighted= sum(nevents_for_GJet)
     QCDsum_unweighted= sum(nevents_for_QCD)
-    DYsum_unweighted= sum(nevents_for_DY)
+    # DYsum_unweighted= sum(nevents_for_DY)
     TTGsJetssum_unweighted= sum(nevents_for_TTGsJets)
-    WGsJetssum_unweighted= sum(nevents_for_WGsJets)
-    WWsum_unweighted= sum(nevents_for_WW)
-    bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
+    # WGsJetssum_unweighted= sum(nevents_for_WGsJets)
+    # WWsum_unweighted= sum(nevents_for_WW)
+    # bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
+    bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted
     #bckgsum_unweighted = DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
 
-    HHsum_weighted = 2*HHsum_weighted
-    HHsum_unweighted = 2*HHsum_unweighted
+    # HHsum_weighted = 2*HHsum_weighted
+    # HHsum_unweighted = 2*HHsum_unweighted
 
     if weights=='BalanceYields':
         print('HHsum_weighted= ' , HHsum_weighted)
         print('Hggsum_weighted= ' , Hggsum_weighted)
         print('DiPhotonsum_weighted= ', DiPhotonsum_weighted)
-        print('GJetsum_weighted= ', GJetsum_weighted)
+        # print('GJetsum_weighted= ', GJetsum_weighted)
         print('QCDsum_weighted= ', QCDsum_weighted)
-        print('DYsum_weighted= ', DYsum_weighted)
+        # print('DYsum_weighted= ', DYsum_weighted)
         print('TTGsJetssum_weighted= ', TTGsJetssum_weighted)
-        print('WGsJetssum_weighted= ', WGsJetssum_weighted)
-        print('WWsum_weighted= ', WWsum_weighted)
+        # print('WGsJetssum_weighted= ', WGsJetssum_weighted)
+        # print('WWsum_weighted= ', WWsum_weighted)
         print('bckgsum_weighted= ', bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = HHsum_unweighted/HHsum_weighted
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
+        # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
 
     if weights=='BalanceNonWeighted':
         print('HHsum_unweighted= ' , HHsum_unweighted)
         print('Hggsum_unweighted= ' , Hggsum_unweighted)
         print('DiPhotonsum_unweighted= ', DiPhotonsum_unweighted)
-        print('GJetsum_unweighted= ', GJetsum_unweighted)
+        # print('GJetsum_unweighted= ', GJetsum_unweighted)
         print('QCDsum_unweighted= ', QCDsum_unweighted)
-        print('DYsum_unweighted= ', DYsum_unweighted)
+        # print('DYsum_unweighted= ', DYsum_unweighted)
         print('TTGsJetssum_unweighted= ', TTGsJetssum_unweighted)
-        print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
-        print('WWsum_unweighted= ', WWsum_unweighted)
+        # print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
+        # print('WWsum_unweighted= ', WWsum_unweighted)
         print('bckgsum_unweighted= ', bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = 1.
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
 
 
     # Remove column headers that aren't input variables
@@ -799,15 +892,10 @@ def main():
                     hyp_param_scan_results.write("Mean (stdev) test score: %f (%f) with parameters: %r\n" % (mean,stdev,param))
             exit()
         else:
-            # Load the updated dnn parameter json file
-            f_dnn_parameter = open(output_directory+'/dnn_parameter.json',)
-            dnn_parameter = json.load(f_dnn_parameter)
-            f_dnn_parameter.close()
-            # hyper-parameter scan results
-            learn_rate = dnn_parameter['Optimized_FH'][0]['learn_rate']
-            epochs = dnn_parameter['Optimized_FH'][0]['epochs']
-            batch_size=dnn_parameter['Optimized_FH'][0]['batch_size']
-            optimizer=dnn_parameter['Optimized_FH'][0]['optimizer']
+            learn_rate  = args.learnRate
+            epochs  = args.epochs
+            batch_size= args.batch_size
+            optimizer= args.optimizer
 
             print("DNN parameters: Before traning the model:")
             print("\tepochs: ",epochs)
@@ -816,22 +904,28 @@ def main():
             print("\toptimizer: ",optimizer)
 
             # Define model for analysis
-            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0)
+            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0) # callbacks
+            # Learning rate schedular
+            if (args.dynamic_lr):
+                LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
+            csv_logger = CSVLogger('%s/training.log'%(output_directory), separator=',', append=True) # callbacks
+            # model = ANN_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            # model = baseline_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
             # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
-            # Learning reate schedular
-            LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular)
-
             # Fit the model
             # Batch size = examples before updating weights (larger = faster training)
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
-            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler])
+            if (args.dynamic_lr):
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
+            else:
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
