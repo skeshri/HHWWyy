@@ -2,7 +2,7 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-06 21:24:09
+# @Last Modified time: 2021-04-08 20:34:41
 
 ##
 ## USER MODIFIED STRING
@@ -24,7 +24,7 @@ if args.scan:
   CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
   # CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
 else:
-  CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w BalanceNonWeighted"
 
 #===================================================================
 import os

@@ -437,29 +437,45 @@ def main():
 
     usage = 'usage: %prog [options]'
     parent_parser = argparse.ArgumentParser(usage)
-    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=0, type=int)
-    parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
-    parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='', type=str)
+    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=False, type=bool)
+    parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
+    parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='TEST', type=str)
     parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
-    parent_parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str) # Adam, Nadam, Adamax, Adadelta, Adagrad
-    parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=0, type=int)
-    parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=0, type=int)
-    parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=1, type=int)
+    parent_parser.add_argument('-m', '--model', dest='model', help='model to train with', default='Nadam', type=str,choices=['Adam', 'Nadam', 'Adamax', 'Adadelta', 'Adagrad'])
+    parent_parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
+    parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=False, type=bool)
+    parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=False, type=bool)
+    parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
     args = parent_parser.parse_args()
+
+    print('#---------------------------------------')
+    print('#    Print all input arguments         #')
+    print('#---------------------------------------')
+    print('load_dataset     = %s'%args.load_dataset)
+    print('train_model      = %s'%args.train_model)
+    print('suff             = %s'%args.suff)
+    print('inputs_file_path = %s'%args.inputs_file_path)
+    print('model            = %s'%args.model)
+    print('weights          = %s'%args.weights)
+    print('para             = %s'%args.para)
+    print('GridSearch       = %s'%args.GridSearch)
+    print('RandomSearch     = %s'%args.RandomSearch)
+    print('---------------------------------------')
+
+
     do_model_fit = args.train_model
     suffix = args.suffix
 
     # Create instance of the input files directory
-    #inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
-    #inputs_file_path = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
-    #inputs_file_path = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN/'
-    # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN/'
-    # inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/new/DNN_MoreVar/'
-    inputs_file_path = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
+    # inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
+    # SL Lxplus = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
+    # FH Lxplus = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN_MoreVar_v2/'
+    # FH IHEP = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
+    inputs_file_path = args.inputs_file_path
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
-    weights='BalanceNonWeighted'# 'BalanceYields' or 'BalanceNonWeighted'
+    weights=args.weights
     optimizer = args.model
     validation_split=0.1
     GridSearch = args.GridSearch
