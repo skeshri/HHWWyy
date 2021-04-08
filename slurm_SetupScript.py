@@ -2,7 +2,7 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-08 20:34:41
+# @Last Modified time: 2021-04-08 20:44:21
 
 ##
 ## USER MODIFIED STRING
@@ -13,18 +13,21 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--dirTag', dest='dirTag', help='name of directory tag', default="TEST_args", type=str)
 parser.add_argument('-j', '--jobName', dest='jobName', help='Slurm job name', default="DNN", type=str)
 parser.add_argument('-s', '--scan', dest='scan', help='do RandomizedSearchCV scan or not', default=False, type=bool)
+parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
 
 args = parser.parse_args()
 
 dirTag=args.dirTag
-LogDirPath = "/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/HHWWyyDNN_binary_"+dirTag+"_BalanceYields/"
+MacroPath = '/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/'
+# LogDirPath = "/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/HHWWyyDNN_binary_"+dirTag+"_BalanceYields/"
+LogDirPath = MacroPath + "/HHWWyyDNN_"+dirTag+"_BalanceYields/"
 
 print ("args.scan: ",args.scan)
 if args.scan:
   CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
   # CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
 else:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w BalanceNonWeighted"
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights
 
 #===================================================================
 import os
@@ -94,15 +97,15 @@ message = """#! /bin/bash
 
 # Replace the following lines with your real workload
 ########################################
-cd /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/
 source /cvmfs/sft.cern.ch/lcg/views/dev4cuda/latest/x86_64-centos7-gcc8-opt/setup.sh
 # pip install shap
 export QT_QPA_PLATFORM=offscreen
 # Reference: https://stackoverflow.com/a/55210689/2302094
 export XDG_RUNTIME_DIR=/hpcfs/bes/mlgpu/sharma/ML_GPU/someRuntimeFix
 date
+cd %s
 time(%s)
-time(python -m json.tool HHWWyyDNN_binary_%s_BalanceYields/model_serialised.json > HHWWyyDNN_binary_%s_BalanceYields/model_serialised_nice.json)
+time(python -m json.tool HHWWyyDNN_binary_%s_%s/model_serialised.json > HHWWyyDNN_binary_%s_%s/model_serialised_nice.json)
 date
 ##########################################
 # Work load end
@@ -120,7 +123,7 @@ sleep 180
 
 """
 
-message = message %(SlurmJobName,LogDirPath,CommandToRun,dirTag,dirTag)
+message = message %(SlurmJobName,LogDirPath,MacroPath,CommandToRun,dirTag,args.weights,dirTag,args.weights)
 
 LimitOutTextFile.write(message+"\n")
 

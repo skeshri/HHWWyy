@@ -5,6 +5,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Code to train deep neural network
 # for HH->WWyy analysis.
+# @Last Modified by:   Ram Krishna Sharma
+# @Last Modified time: 2021-04-08 21:09:55
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -54,6 +56,7 @@ from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import LearningRateScheduler
+from tensorflow.keras.callbacks import CSVLogger
 
 import shap
 from root_numpy import root2array, tree2array
@@ -337,11 +340,38 @@ def load_trained_model(model_path):
     model = load_model(model_path, compile=False)
     return model
 
-def custom_LearningRate_schedular(epoch):
-    if epoch < 5:
-        return 0.01
+def custom_LearningRate_schedular(epoch,lr):
+    if epoch < 10:
+        return 0.1
     else:
-        return 0.01 * tf.math.exp(0.1 * (10 - epoch))
+        return 0.1 * tf.math.exp(0.1 * (10 - epoch))
+
+def ANN_model(
+                   num_variables,
+                   optimizer='Nadam',
+                   activation='relu',
+                   loss='binary_crossentropy',
+                   dropout_rate=0.2,
+                   init_mode='glorot_normal',
+                   learn_rate=0.001
+                   ):
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
+    model = Sequential()
+    # model.add(Dense(num_variables,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(num_variables,kernel_initializer=init_mode,activation=activation))
+    model.add(Dense(1, activation='sigmoid'))
+    if optimizer=='Adam':
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Nadam':
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adamax':
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adadelta':
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adagrad':
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+    return model
 
 def baseline_model(
                    num_variables,
@@ -358,6 +388,35 @@ def baseline_model(
     model.add(Dense(70,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     # model.add(Dropout(dropout_rate))
     model.add(Dense(35,activation=activation))
+    # model.add(Dropout(dropout_rate))
+    model.add(Dense(10,activation=activation))
+    model.add(Dense(4,activation=activation))
+    model.add(Dense(1, activation='sigmoid'))
+    if optimizer=='Adam':
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Nadam':
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adamax':
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adadelta':
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+    if optimizer=='Adagrad':
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+    return model
+
+def baseline_model2(
+                   num_variables,
+                   optimizer='Nadam',
+                   activation='relu',
+                   loss='binary_crossentropy',
+                   dropout_rate=0.2,
+                   init_mode='glorot_normal',
+                   learn_rate=0.001
+                   ):
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
+    model = Sequential()
+    model.add(Dense(10,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
     # model.add(Dropout(dropout_rate))
     model.add(Dense(10,activation=activation))
     model.add(Dense(4,activation=activation))
@@ -453,11 +512,11 @@ def main():
     print('#---------------------------------------')
     print('load_dataset     = %s'%args.load_dataset)
     print('train_model      = %s'%args.train_model)
-    print('suff             = %s'%args.suff)
+    print('suffix           = %s'%args.suffix)
     print('inputs_file_path = %s'%args.inputs_file_path)
     print('model            = %s'%args.model)
     print('weights          = %s'%args.weights)
-    print('para             = %s'%args.para)
+    print('hyp_param_scan   = %s'%args.hyp_param_scan)
     print('GridSearch       = %s'%args.GridSearch)
     print('RandomSearch     = %s'%args.RandomSearch)
     print('---------------------------------------')
@@ -510,11 +569,13 @@ def main():
         batch_size=dnn_parameter['default'][0]['batch_size']
         optimizer=dnn_parameter['default'][0]['optimizer']
 
+    print('---------------------------------------')
     print("Input DNN parameters:")
     print("\tepochs: ",epochs)
     print("\tbatch_size: ",batch_size)
     print("\tlearn_rate: ",learn_rate)
     print("\toptimizer: ",optimizer)
+    print('---------------------------------------')
 
     """
     Before we start save git patch. This will be helpful in debug the code later or taking care of the differences between many traning directory.
@@ -834,22 +895,24 @@ def main():
             print("\toptimizer: ",optimizer)
 
             # Define model for analysis
-            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0)
+            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0) # callbacks
+            # Learning rate schedular
+            LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
+            csv_logger = CSVLogger('%s/training.log'%(output_directory), separator=',', append=True) # callbacks
+            # model = ANN_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            # model = baseline_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
             # tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
-            # Learning reate schedular
-            LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular)
-
             # Fit the model
             # Batch size = examples before updating weights (larger = faster training)
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
-            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler])
+            history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
