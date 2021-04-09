@@ -381,8 +381,7 @@ def main():
                 N_goodJets = array('d',[0])
                 N_goodJets = data_tree.N_goodJets
 
-                # if ( (Leading_Photon_pt/CMS_hgg_mass)>0.35 and (Subleading_Photon_pt/CMS_hgg_mass)>0.25 and passbVeto==1 and ExOneLep==1 and N_goodJets>=1):
-                if ( (Leading_Photon_pt/CMS_hgg_mass)>1/3. and (Subleading_Photon_pt/CMS_hgg_mass)>1/4.):
+                if (( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7)):
                     pass_selection = 1
                 else:
                     pass_selection = 0

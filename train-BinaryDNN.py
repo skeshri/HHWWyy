@@ -5,7 +5,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Code to train deep neural network
 # for HH->WWyy analysis.
-# @Last Modified by:   ramkrishna
+# @Last Modified by:   Ram Krishna Sharma
 # @Last Modified time: 2021-04-09 22:37:42
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
@@ -654,7 +654,6 @@ def main():
         # data = data.mask(data<-25., -9.)
         # data[data<-25] = -9.0
         # data = data.replace(to_replace=-99.,value=-9.0)
-        # data[data < -25.] = -9.0
         num = data._get_numeric_data()
         num[num < -25.] = -9.0
         data.to_csv(outputdataframe_name, index=False)

@@ -2,7 +2,7 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-08 23:20:53
+# @Last Modified time: 2021-04-09 22:49:07
 
 ##
 ## USER MODIFIED STRING
@@ -40,7 +40,9 @@ def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
         os.makedirs(dir)
-        os.system("cp dnn_parameter.json "+dir)
+        # os.system("cp dnn_parameter.json "+dir)
+        os.system("cp input_variables.json "+dir)
+        # os.system("cp train-BinaryDNN.py "+dir)
 
 check_dir(LogDirPath.replace("//","/"))
 
@@ -137,3 +139,5 @@ LimitOutTextFile.close()
 print("Log directory name: %s"%LogDirPath.replace("//","/"))
 print("Run slurm script using:")
 print("\tsbatch %s/%s"%(LogDirPath.replace("//","/"),SlurmScriptName))
+
+os.system("sbatch %s/%s"%(LogDirPath.replace("//","/"),SlurmScriptName))

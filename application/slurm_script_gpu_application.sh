@@ -16,7 +16,7 @@
 #SBATCH --account=mlgpu
 
 # Specify your job name, optional option, but strongly recommand to specify some name
-#SBATCH --job-name=HHWWgg
+#SBATCH --job-name=WWApplication
 
 # Specify how many cores you will need, default is one if not specified
 #SBATCH --ntasks=1
