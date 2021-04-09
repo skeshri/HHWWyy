@@ -8,4 +8,8 @@ logs/
 .DS_Store
 .ipynb_checkpoints/
 old_tranings/
+correlation_plots/
+dataframes/
 slurm_submit_*.sh
+__init__.py
+*.pb

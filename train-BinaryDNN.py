@@ -5,8 +5,8 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Code to train deep neural network
 # for HH->WWyy analysis.
-# @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-09 13:11:26
+# @Last Modified by:   ramkrishna
+# @Last Modified time: 2021-04-09 16:24:10
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -62,6 +62,9 @@ import shap
 from root_numpy import root2array, tree2array
 from plotting.plotter import plotter
 # import pydotplus as pydot
+import matplotlib as mpl
+mpl.rcParams['figure.figsize'] = (12, 10)
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 # exit()
@@ -346,6 +349,18 @@ def custom_LearningRate_schedular(epoch,lr):
     else:
         return 0.1 * tf.math.exp(0.1 * (10 - epoch))
 
+METRICS = [
+      keras.metrics.TruePositives(name='tp'),
+      keras.metrics.FalsePositives(name='fp'),
+      keras.metrics.TrueNegatives(name='tn'),
+      keras.metrics.FalseNegatives(name='fn'),
+      keras.metrics.BinaryAccuracy(name='accuracy'),
+      keras.metrics.Precision(name='precision'),
+      keras.metrics.Recall(name='recall'),
+      keras.metrics.AUC(name='auc'),
+      keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
+]
+
 def ANN_model(
                    num_variables,
                    optimizer='Nadam',
@@ -353,7 +368,8 @@ def ANN_model(
                    loss='binary_crossentropy',
                    dropout_rate=0.2,
                    init_mode='glorot_normal',
-                   learn_rate=0.001
+                   learn_rate=0.001,
+                   metrics=METRICS
                    ):
     # strategy = tf.distribute.MirroredStrategy()
     # with strategy.scope():
@@ -362,15 +378,15 @@ def ANN_model(
     model.add(Dense(num_variables,kernel_initializer=init_mode,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
     if optimizer=='Adam':
-        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=metrics)
     if optimizer=='Nadam':
-        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=metrics)
     if optimizer=='Adamax':
-        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=metrics)
     if optimizer=='Adadelta':
-        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=metrics)
     if optimizer=='Adagrad':
-        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=metrics)
     return model
 
 def baseline_model(
@@ -380,7 +396,8 @@ def baseline_model(
                    loss='binary_crossentropy',
                    dropout_rate=0.2,
                    init_mode='glorot_normal',
-                   learn_rate=0.001
+                   learn_rate=0.001,
+                   metrics=METRICS
                    ):
     # strategy = tf.distribute.MirroredStrategy()
     # with strategy.scope():
@@ -393,15 +410,15 @@ def baseline_model(
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
     if optimizer=='Adam':
-        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=metrics)
     if optimizer=='Nadam':
-        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=metrics)
     if optimizer=='Adamax':
-        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=metrics)
     if optimizer=='Adadelta':
-        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=metrics)
     if optimizer=='Adagrad':
-        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=metrics)
     return model
 
 def baseline_model2(
@@ -411,7 +428,8 @@ def baseline_model2(
                    loss='binary_crossentropy',
                    dropout_rate=0.2,
                    init_mode='glorot_normal',
-                   learn_rate=0.001
+                   learn_rate=0.001,
+                   metrics=METRICS
                    ):
     # strategy = tf.distribute.MirroredStrategy()
     # with strategy.scope():
@@ -422,15 +440,15 @@ def baseline_model2(
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
     if optimizer=='Adam':
-        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=metrics)
     if optimizer=='Nadam':
-        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=metrics)
     if optimizer=='Adamax':
-        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=metrics)
     if optimizer=='Adadelta':
-        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=metrics)
     if optimizer=='Adagrad':
-        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=metrics)
     return model
 
 def gscv_model(
@@ -439,7 +457,8 @@ def gscv_model(
                 activation='relu',
                 init_mode='glorot_normal',
                 learn_rate=0.01,
-                neurons=10
+                neurons=10,
+                metrics=METRICS
                 ):
     model = Sequential()
     model.add(Dense(neurons,input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
@@ -447,15 +466,15 @@ def gscv_model(
     model.add(Dense(4,activation=activation))
     model.add(Dense(1, activation='sigmoid'))
     if optimizer=='Adam':
-        model.compile(loss='binary_crossentropy',optimizer=Adam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss='binary_crossentropy',optimizer=Adam(lr=learn_rate),metrics=metrics)
     if optimizer=='Nadam':
-        model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=['acc'])
+        model.compile(loss='binary_crossentropy',optimizer=Nadam(lr=learn_rate),metrics=metrics)
     if optimizer=='Adamax':
-        model.compile(loss='binary_crossentropy',optimizer=Adamax(lr=learn_rate),metrics=['acc'])
+        model.compile(loss='binary_crossentropy',optimizer=Adamax(lr=learn_rate),metrics=metrics)
     if optimizer=='Adadelta':
-        model.compile(loss='binary_crossentropy',optimizer=Adadelta(lr=learn_rate),metrics=['acc'])
+        model.compile(loss='binary_crossentropy',optimizer=Adadelta(lr=learn_rate),metrics=metrics)
     if optimizer=='Adagrad':
-        model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=['acc'])
+        model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=metrics)
     return model
 
 def new_model(
@@ -465,7 +484,8 @@ def new_model(
                loss='binary_crossentropy',
                dropout_rate=0.2,
                init_mode='glorot_normal',
-               learn_rate=0.001
+               learn_rate=0.001,
+               metrics=METRICS
                ):
     model = Sequential()
     model.add(Dense(10, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
@@ -482,7 +502,7 @@ def new_model(
     model.add(Activation('relu'))
     model.add(Dense(1, activation="sigmoid"))
     optimizer=Nadam(lr=learn_rate)
-    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=['acc'])
+    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
     return model
 
 def check_dir(dir):
@@ -777,6 +797,7 @@ def main():
     # Remove column headers that aren't input variables
     training_columns = column_headers[:-6]
     print('<train-DNN> Training features: ', training_columns)
+    print('<train-DNN> len(Training features): ', len(training_columns))
 
     column_order_txt = '%s/column_order.txt' %(output_directory)
     column_order_file = open(column_order_txt, "wb")
@@ -939,6 +960,7 @@ def main():
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
+
             # Make plot of loss function evolution
             Plotter.plot_training_progress_acc(histories, labels)
             acc_progress_filename = 'DNN_acc_wrt_epoch'
@@ -948,6 +970,11 @@ def main():
             Plotter.history_plot(history, label='loss')
             Plotter.save_plots(dir=plots_dir, filename='history_loss.png')
             Plotter.save_plots(dir=plots_dir, filename='history_loss.pdf')
+
+            Plotter.plot_metrics(history)
+            all_metrics = 'all_metrics'
+            Plotter.save_plots(dir=plots_dir, filename=all_metrics+'.png')
+            Plotter.save_plots(dir=plots_dir, filename=all_metrics+'.pdf')
     else:
         model_name = os.path.join(output_directory,'model.h5')
         model = load_trained_model(model_name)

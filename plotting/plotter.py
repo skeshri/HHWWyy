@@ -8,6 +8,9 @@ from sklearn.metrics import roc_curve, roc_auc_score, auc, confusion_matrix
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib as mpl
+mpl.rcParams['figure.figsize'] = (12, 10)
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 class plotter(object):
 
@@ -939,3 +942,26 @@ DY & %s \\ \hline
         plt.gca().set_title(title)
         plt.tight_layout()
         plt.savefig("{}/plots/{}.png".format(self.output_directory,title), bbox_inches='tight')
+
+    def plot_metrics(self,history):
+        metrics = ['loss', 'prc', 'precision', 'recall']
+        for n, metric in enumerate(metrics):
+            name = metric.replace("_"," ").capitalize()
+            plt.subplot(2,2,n+1)
+            plt.plot(history.history[metric], color=colors[0], label='Train')
+            plt.plot(history.history['val_'+metric],
+                     color=colors[0], linestyle="--", label='Val')
+            plt.xlabel('Epoch',fontsize=21)
+            plt.ylabel(name,fontsize=21)
+            if metric == 'loss':
+              plt.ylim([0, plt.ylim()[1]])
+            elif metric == 'auc':
+              plt.ylim([0.8,1])
+            else:
+              plt.ylim([0,1])
+
+            plt.legend(loc='best',fontsize=35)
+        acc_title = 'plots/all_metrics.png'
+        plt.tight_layout()
+        return
+
