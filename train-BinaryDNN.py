@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-09 11:39:58
+# @Last Modified time: 2021-04-09 13:11:26
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -720,6 +720,9 @@ def main():
     # HHsum_unweighted = 2*HHsum_unweighted
 
     if weights=='BalanceYields':
+        print('#---------------------------------------')
+        print('#    BalanceYields: Print weight       #')
+        print('#---------------------------------------')
         print('HHsum_weighted= ' , HHsum_weighted)
         print('Hggsum_weighted= ' , Hggsum_weighted)
         print('DiPhotonsum_weighted= ', DiPhotonsum_weighted)
@@ -730,6 +733,8 @@ def main():
         # print('WGsJetssum_weighted= ', WGsJetssum_weighted)
         # print('WWsum_weighted= ', WWsum_weighted)
         print('bckgsum_weighted= ', bckgsum_weighted)
+        print('New classweight: (HHsum_unweighted/HHsum_weighted) = ',(HHsum_unweighted/HHsum_weighted))
+        print('#---------------------------------------')
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = HHsum_unweighted/HHsum_weighted
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
@@ -741,6 +746,9 @@ def main():
         # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
 
     if weights=='BalanceNonWeighted':
+        print('#---------------------------------------')
+        print('#    BalanceNonWeighted: Print weight  #')
+        print('#---------------------------------------')
         print('HHsum_unweighted= ' , HHsum_unweighted)
         print('Hggsum_unweighted= ' , Hggsum_unweighted)
         print('DiPhotonsum_unweighted= ', DiPhotonsum_unweighted)
@@ -751,6 +759,10 @@ def main():
         # print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
         # print('WWsum_unweighted= ', WWsum_unweighted)
         print('bckgsum_unweighted= ', bckgsum_unweighted)
+
+        print('New classweight: (HHsum_unweighted/bckgsum_unweighted) = ',(HHsum_unweighted/bckgsum_unweighted))
+        print('#---------------------------------------')
+
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = 1.
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)

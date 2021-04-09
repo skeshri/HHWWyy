@@ -134,8 +134,8 @@ def main():
             data = pandas.read_csv(dataframe_name)
         else:
             print('<run_network_evaluation> Making *new* data file from %s . . . . ' % (inputs_file_path))
-            selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. ) )'
-            # selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 0.35 ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 0.25 ) && passbVeto==1 && ExOneLep==1 && N_goodJets>=1 )'
+            # selection_criteria = '( ( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. ) && ( (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. ) )'
+            selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7)'
             data = DNN_applier.load_data(inputs_file_path,column_headers,selection_criteria,current_sample_name)
             if len(data) == 0 :
                 print('<run_network_evaluation> No data! Next file.')
