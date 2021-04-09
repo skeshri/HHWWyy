@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   ramkrishna
-# @Last Modified time: 2021-04-09 16:24:10
+# @Last Modified time: 2021-04-09 22:37:42
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -652,34 +652,44 @@ def main():
         data = load_data(inputs_file_path,column_headers,selection_criteria)
         # Change sentinal value to speed up training.
         # data = data.mask(data<-25., -9.)
-        # data = data.loc[data<-25.]
-        data = data.replace(to_replace=-99.,value=-9.0)
-        data = data.replace(to_replace=-999.,value=-9.0)
-        data = data.replace(to_replace=-9999.,value=-9.0)
+        # data[data<-25] = -9.0
+        # data = data.replace(to_replace=-99.,value=-9.0)
         # data[data < -25.] = -9.0
+        num = data._get_numeric_data()
+        num[num < -25.] = -9.0
         data.to_csv(outputdataframe_name, index=False)
         data = pandas.read_csv(outputdataframe_name)
 
     print('#---------------------------------------')
     print('#    Print pandas dataframe            #')
     print('#---------------------------------------')
-    data.head()
+    print(data.head())
     print('#---------------------------------------')
     print('#---------------------------------------')
     print('#    describe pandas dataframe         #')
     print('#---------------------------------------')
-    data.describe()
+    print(data.describe())
     print('#---------------------------------------')
-    neg, pos = np.bincount(data['target'])
-    total = neg + pos
-    print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(
-    total, pos, 100 * pos / total))
+    bkg, sig = np.bincount(data['target'])
+    total = bkg + sig
+    print('Examples:\n    Total: {}\n    Signal: {} ({:.2f}% of total)\n    Background: {} ({:.2f}% of total)\n'.format(
+    total, sig, 100 * sig / total, bkg, 100 * bkg / total))
     print('#---------------------------------------')
     print('<main> data columns: ', (data.columns.values.tolist()))
     n = len(data)
     nHH = len(data.iloc[data.target.values == 1])
     nbckg = len(data.iloc[data.target.values == 0])
     print("Total (train+validation) length of HH = %i, bckg = %i" % (nHH, nbckg))
+
+    # Scaling by total/2 helps keep the loss to a similar magnitude.
+    # The sum of the weights of all examples stays the same.
+    weight_for_0 = (1 / bkg)*(total)/2.0
+    weight_for_1 = (1 / sig)*(total)/2.0
+
+    class_weight = {0: weight_for_0, 1: weight_for_1}
+
+    print('Weight for class 0: {:.2f}'.format(weight_for_0))
+    print('Weight for class 1: {:.2f}'.format(weight_for_1))
 
     # Make instance of plotter tool
     Plotter = plotter()
@@ -779,8 +789,6 @@ def main():
         # print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
         # print('WWsum_unweighted= ', WWsum_unweighted)
         print('bckgsum_unweighted= ', bckgsum_unweighted)
-
-        print('New classweight: (HHsum_unweighted/bckgsum_unweighted) = ',(HHsum_unweighted/bckgsum_unweighted))
         print('#---------------------------------------')
 
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = 1.
@@ -793,6 +801,7 @@ def main():
         # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
 
+    exit()
 
     # Remove column headers that aren't input variables
     training_columns = column_headers[:-6]
@@ -956,7 +965,8 @@ def main():
             if (args.dynamic_lr):
                 history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
             else:
-                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
+                # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,class_weights=class_weight,callbacks=[early_stopping_monitor,csv_logger])
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
