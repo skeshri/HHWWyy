@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-09 22:37:42
+# @Last Modified time: 2021-04-10 00:26:09
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU
 import tempfile
@@ -800,7 +800,7 @@ def main():
         # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
 
-    exit()
+    # exit()
 
     # Remove column headers that aren't input variables
     training_columns = column_headers[:-6]
@@ -965,7 +965,7 @@ def main():
                 history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
             else:
                 # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
-                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,class_weights=class_weight,callbacks=[early_stopping_monitor,csv_logger])
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,callbacks=[early_stopping_monitor,csv_logger],class_weight=class_weight)
             # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
             histories.append(history)
             labels.append(optimizer)
