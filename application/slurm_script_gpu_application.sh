@@ -16,7 +16,7 @@
 #SBATCH --account=mlgpu
 
 # Specify your job name, optional option, but strongly recommand to specify some name
-#SBATCH --job-name=HHWWgg
+#SBATCH --job-name=WWApplication
 
 # Specify how many cores you will need, default is one if not specified
 #SBATCH --ntasks=1
@@ -84,7 +84,13 @@ date
 #time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_ZZgg_WithoutQCD_BalanceYields -p  HHZZgg HHWWgg)
 #time(python run_network_evaluation.py -d HHWWyyDNN_binary_April2_ZZgg_WithQCD_BalanceYields -p  HHZZgg HHWWgg)
 
-time(python run_network_evaluation.py -d HHWWyyDNN_HH_QCD_DiPho_E200_v1_BalanceYields -path /hpcfs/bes/mlgpu/sharma/ML_GPU/MultiClassifier/MultiClassifier -p HHWWgg HHZZgg QCD Data DiPhoton  ttHJetToGG_M125_13TeV  VBFHToGG_M125_13TeV  GluGluHToGG_M125_TuneCP5_13TeV   VHToGG_M125_13TeV )
+#time(python run_network_evaluation.py -d HHWWyyDNN_HH_QCD_DiPho_E200_v1_BalanceYields -path /hpcfs/bes/mlgpu/sharma/ML_GPU/MultiClassifier/MultiClassifier -p HHWWgg HHZZgg QCD Data DiPhoton  ttHJetToGG_M125_13TeV  VBFHToGG_M125_13TeV  GluGluHToGG_M125_TuneCP5_13TeV   VHToGG_M125_13TeV )
+
+#HHWWyyDNN_binary_UpdateWeight_RemoveFactor2HHSumWgt_SH_NewModel_LR0p0001_BalanceNonWeighted
+#/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_UpdateWeight_RemoveFactor2HHSumWgt_SH_NewModel_LR0p0001_BalanceNonWeighted -path /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/  -p HHWWgg HHZZgg QCD Data DiPhoton  ttHJetToGG_M125_13TeV  VBFHToGG_M125_13TeV  GluGluHToGG_M125_TuneCP5_13TeV   VHToGG_M125_13TeV )
+#time(python run_network_evaluation.py -d HHWWyyDNN_binary_9AprIDCut_LR0p00001_Adam_BalanceNonWeighted -path /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/  -p HHWWgg HHZZgg QCD Data DiPhoton  ttHJetToGG_M125_13TeV  VBFHToGG_M125_13TeV  GluGluHToGG_M125_TuneCP5_13TeV   VHToGG_M125_13TeV )
+time(python run_network_evaluation.py -d HHWWyyDNN_binary_9AprIDCut_LR0p00001_Adam_BalanceNonWeighted -path /hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/  -p VBFHToGG_M125_13TeV  GluGluHToGG_M125_TuneCP5_13TeV   VHToGG_M125_13TeV )
 date
 ##########################################
 # Work load end
