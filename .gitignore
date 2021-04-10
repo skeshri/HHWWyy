@@ -13,3 +13,4 @@ dataframes/
 slurm_submit_*.sh
 __init__.py
 *.pb
+RunManySlurmCommand.sh

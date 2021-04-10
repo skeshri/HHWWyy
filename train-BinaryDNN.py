@@ -6,9 +6,9 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-10 00:26:09
+# @Last Modified time: 2021-04-10 21:22:32
 import os
-# Next two files are to get rid of warning while traning on IHEP GPU
+# Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import matplotlib.pyplot as plt
@@ -345,9 +345,10 @@ def load_trained_model(model_path):
 
 def custom_LearningRate_schedular(epoch,lr):
     if epoch < 10:
-        return 0.1
+        return 0.01
     else:
-        return 0.1 * tf.math.exp(0.1 * (10 - epoch))
+        # return 0.1 * tf.math.exp(0.1 * (10 - epoch))
+        return 0.01 * tf.math.exp(0.05 * (10 - epoch))
 
 METRICS = [
       keras.metrics.TruePositives(name='tp'),
@@ -521,6 +522,8 @@ def main():
     parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='TEST', type=str)
     parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
     parent_parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
+    parent_parser.add_argument('-cw', '--classweight', dest='classweight', help='classweight to use', default=False, type=bool)
+    parent_parser.add_argument('-sw', '--sampleweight', dest='sampleweight', help='sampleweight to use', default=False, type=bool)
 
     parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
     parent_parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
@@ -541,6 +544,8 @@ def main():
     print('suffix           = %s'%args.suffix)
     print('inputs_file_path = %s'%args.inputs_file_path)
     print('weights          = %s'%args.weights)
+    print('classweight      = %s'%args.classweight)
+    print('sampleweight     = %s'%args.sampleweight)
     print('')
     print('dynamic LearnRate= %s'%args.dynamic_lr)
     print('Learn rate       = %s'%args.learnRate)
@@ -962,11 +967,29 @@ def main():
             # Epoch = One pass over data (useful for periodic logging and evaluation)
             #class_weights = np.array(class_weight.compute_class_weight('balanced',np.unique(Y_train),Y_train))
             if (args.dynamic_lr):
+                print('#---------------------------------------')
+                print('#    dynamic learn rate True           #')
+                print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])')
+                print('#---------------------------------------')
                 history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
+            elif args.classweight:
+                print('#---------------------------------------')
+                print('#    classweight: True                 #')
+                print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,callbacks=[early_stopping_monitor,csv_logger],class_weight=class_weight)')
+                print('#---------------------------------------')
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,class_weight=class_weight,callbacks=[early_stopping_monitor,csv_logger])
+            elif args.sampleweight:
+                print('#---------------------------------------')
+                print('#    sampleweight True                 #')
+                print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])')
+                print('#---------------------------------------')
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
             else:
-                # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
-                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,callbacks=[early_stopping_monitor,csv_logger],class_weight=class_weight)
-            # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,tensorboard_callback])
+                print('#---------------------------------------------------------------------------')
+                print('#    without dynamic_learn rate, no sampleweight, no classweight           #')
+                print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,callbacks=[early_stopping_monitor,csv_logger])')
+                print('#---------------------------------------------------------------------------')
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,callbacks=[early_stopping_monitor,csv_logger])
             histories.append(history)
             labels.append(optimizer)
 
