@@ -380,8 +380,12 @@ def main():
                 CMS_hgg_mass = data_tree.CMS_hgg_mass
                 N_goodJets = array('d',[0])
                 N_goodJets = data_tree.N_goodJets
+                Leading_Photon_MVA = array('d',[0])
+                Leading_Photon_MVA = data_tree.Leading_Photon_MVA
+                Subleading_Photon_MVA = array('d',[0])
+                Subleading_Photon_MVA = data_tree.Subleading_Photon_MVA
 
-                if (( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7)):
+                if ( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. and (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. and Leading_Photon_MVA>-0.7 and Subleading_Photon_MVA>-0.7):
                     pass_selection = 1
                 else:
                     pass_selection = 0
