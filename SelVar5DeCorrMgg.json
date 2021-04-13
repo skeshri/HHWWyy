@@ -1,0 +1,22 @@
+{
+	"Leading_Photon_E/CMS_hgg_mass": "\"F\"",
+	"Leading_Photon_pt/CMS_hgg_mass": "\"F\"",
+	"Subleading_Photon_pt/CMS_hgg_mass": "\"F\"",
+	"New_Leading_Jet_E": "\"F\"",
+	"New_Leading_Jet_pt": "\"F\"",
+	"New_Subleading_Jet_E": "\"F\"",
+	"New_Sub2leading_Jet_E": "\"F\"",
+	"New_Sub2leading_Jet_pt": "\"F\"",
+	"New_Sub3leading_Jet_E": "\"F\"",
+	"New_OnShellW_E": "\"F\"",
+	"New_OnShellW_pt": "\"F\"",
+	"New_OffShellW_E": "\"F\"",
+	"New_HWW_E": "\"F\"",
+	"New_HWW_Mass": "\"F\"",
+	"New_HWW_pt": "\"F\"",
+	"New_DR_gg": "\"F\"",
+	"New_DR_HH": "\"F\"",
+	"New_minDeltaR_gg4j": "\"F\"",
+	"New_maxDeltaR_gg4j": "\"F\"",
+	"New_minDeltaR_4j": "\"F\""
+}

@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-10 21:22:32
+# @Last Modified time: 2021-04-13
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
@@ -452,6 +452,54 @@ def baseline_model2(
         model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=metrics)
     return model
 
+def baseline_modelScan(
+                   num_variables,
+                   optimizer='Nadam',
+                   activation='relu',
+                   loss='binary_crossentropy',
+                   dropout_rate=0.2,
+                   init_mode='glorot_normal',
+                   learn_rate=0.001,
+                   metrics=METRICS,
+                   nHiddenLayer = 1,
+                   dropoutLayer = 0
+                   ):
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
+    model = Sequential()
+    # neuronsFirstHiddenLayer = (((num_variables+1)*2)/3)
+    neuronsHiddenLayer = []
+    neuronsInputLayer = num_variables
+    for x in xrange(1,10):
+        neuronsHiddenLayer.append((((neuronsInputLayer+1)*2)/3))
+        neuronsInputLayer = neuronsHiddenLayer[x]
+    if (nHiddenLayer>=1):
+        model.add(Dense(neuronsHiddenLayer[0],input_dim=num_variables,kernel_initializer=init_mode,activation=activation))
+    if (dropoutLayer):
+        model.add(Dropout(dropout_rate))
+    if (nHiddenLayer>=2):
+        model.add(Dense(neuronsHiddenLayer[1],activation=activation))
+    if (dropoutLayer):
+        model.add(Dropout(dropout_rate))
+    if (nHiddenLayer>=3):
+        model.add(Dense(neuronsHiddenLayer[2],activation=activation))
+    if (nHiddenLayer>=4):
+        model.add(Dense(neuronsHiddenLayer[3],activation=activation))
+    if (nHiddenLayer>=5):
+        model.add(Dense(neuronsHiddenLayer[4],activation=activation))
+    model.add(Dense(1, activation='sigmoid'))
+    if optimizer=='Adam':
+        model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=metrics)
+    if optimizer=='Nadam':
+        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=metrics)
+    if optimizer=='Adamax':
+        model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=metrics)
+    if optimizer=='Adadelta':
+        model.compile(loss=loss,optimizer=Adadelta(lr=learn_rate),metrics=metrics)
+    if optimizer=='Adagrad':
+        model.compile(loss=loss,optimizer=Adagrad(lr=learn_rate),metrics=metrics)
+    return model
+
 def gscv_model(
                 num_variables=35,
                 optimizer="Nadam",
@@ -524,6 +572,7 @@ def main():
     parent_parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
     parent_parser.add_argument('-cw', '--classweight', dest='classweight', help='classweight to use', default=False, type=bool)
     parent_parser.add_argument('-sw', '--sampleweight', dest='sampleweight', help='sampleweight to use', default=False, type=bool)
+    parent_parser.add_argument('-j', '--json', dest='json', help='input variable json file', default='input_variables.json', type=str)
 
     parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
     parent_parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
@@ -534,6 +583,12 @@ def main():
     parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=False, type=bool)
     parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=False, type=bool)
     parent_parser.add_argument('-r', '--RandomSearch', dest='RandomSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
+
+    parent_parser.add_argument("-nHiddenLayer", "--nHiddenLayer", type=int, default=1, help = "Number of Hidden layers")
+    parent_parser.add_argument("-dropoutLayer", "--dropoutLayer", type=int, default=0, help = "If you want to include dropoutLayer with the first two hidden layers")
+
+
+
     args = parent_parser.parse_args()
 
     print('#---------------------------------------')
@@ -546,6 +601,7 @@ def main():
     print('weights          = %s'%args.weights)
     print('classweight      = %s'%args.classweight)
     print('sampleweight     = %s'%args.sampleweight)
+    print('Input Var json   = %s'%args.json)
     print('')
     print('dynamic LearnRate= %s'%args.dynamic_lr)
     print('Learn rate       = %s'%args.learnRate)
@@ -624,7 +680,7 @@ def main():
     additional_hyperparams.write("weights: "+weights+"\n")
     # Create plots subdirectory
     plots_dir = os.path.join(output_directory,'plots/')
-    input_var_jsonFile = open('input_variables.json','r')
+    input_var_jsonFile = open(args.json,'r')
     selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7)'
 
     # Load Variables from .json
@@ -674,26 +730,24 @@ def main():
     print('#---------------------------------------')
     print(data.describe())
     print('#---------------------------------------')
-    bkg, sig = np.bincount(data['target'])
-    total = bkg + sig
-    print('Examples:\n    Total: {}\n    Signal: {} ({:.2f}% of total)\n    Background: {} ({:.2f}% of total)\n'.format(
-    total, sig, 100 * sig / total, bkg, 100 * bkg / total))
-    print('#---------------------------------------')
-    print('<main> data columns: ', (data.columns.values.tolist()))
     n = len(data)
     nHH = len(data.iloc[data.target.values == 1])
     nbckg = len(data.iloc[data.target.values == 0])
     print("Total (train+validation) length of HH = %i, bckg = %i" % (nHH, nbckg))
-
+    bkg, sig = np.bincount(data['target'])
+    total = bkg + sig
+    print('Raw events:\n    Total: {}\n    Signal: {} ({:.2f}% of total)\n    Background: {} ({:.2f}% of total)\n'.format(
+    total, sig, 100 * sig / total, bkg, 100 * bkg / total))
     # Scaling by total/2 helps keep the loss to a similar magnitude.
     # The sum of the weights of all examples stays the same.
     weight_for_0 = (1 / bkg)*(total)/2.0
     weight_for_1 = (1 / sig)*(total)/2.0
-
     class_weight = {0: weight_for_0, 1: weight_for_1}
-
-    print('Weight for class 0: {:.2f}'.format(weight_for_0))
-    print('Weight for class 1: {:.2f}'.format(weight_for_1))
+    print('Weight for class background: {:.2f}'.format(weight_for_0))
+    print('Weight for class signal: {:.2f}'.format(weight_for_1))
+    print('#---------------------------------------')
+    print('<main> data columns: ', (data.columns.values.tolist()))
+    print('#---------------------------------------')
 
     # Make instance of plotter tool
     Plotter = plotter()
@@ -703,7 +757,6 @@ def main():
 
     print('<train-DNN> Training dataset shape: ', traindataset.shape)
     print('<train-DNN> Validation dataset shape: ', valdataset.shape)
-
 
     # Event weights
     weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
@@ -956,7 +1009,8 @@ def main():
             # model = ANN_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            model = baseline_modelScan(num_variables, optimizer=optimizer, learn_rate=learn_rate,nHiddenLayer=nHiddenLayer  , dropoutLayer=dropoutLayer)
+            # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -1059,13 +1113,14 @@ def main():
 
 
     # import shap
-    # # from tensorflow.compat.v1.keras.backend import get_session
-    # # tf.compat.v1.disable_v2_behavior()
-    # e = shap.DeepExplainer(model, X_train[:400, ])
-    # # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
-    # shap_values = e.shap_values(X_test[:400, ])
-    # Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    # Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # from tensorflow.compat.v1.keras.backend import get_session
+    # tf.compat.v1.disable_v2_behavior()
+    e = shap.DeepExplainer(model, X_train[:400, ])
+    # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
+    shap_values = e.shap_values(X_test[:400, ])
+    Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
     #e = shap.GradientExplainer(model, X_train[:100, ])
     #shap_values = e.shap_values(X_test[:100, ])
