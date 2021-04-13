@@ -37,13 +37,13 @@ if args.scan:
   CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
   # CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
 elif args.dynamic_lr:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+args.nHiddenLayer + " -dropoutLayer "+args.dropoutLayer + " -dlr "+str(args.dynamic_lr)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -dlr "+str(args.dynamic_lr)
 elif args.classweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+args.nHiddenLayer + " -dropoutLayer "+args.dropoutLayer +" -cw "+str(args.classweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) +" -cw "+str(args.classweight)
 elif args.sampleweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+args.nHiddenLayer + " -dropoutLayer "+args.dropoutLayer +" -sw "+str(args.sampleweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) +" -sw "+str(args.sampleweight)
 else:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+args.nHiddenLayer + " -dropoutLayer "+args.dropoutLayer
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer)
 #===================================================================
 import os
 def check_dir(dir):

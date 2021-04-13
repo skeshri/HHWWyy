@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-13
+# @Last Modified time: 2021-04-14
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
@@ -470,7 +470,7 @@ def baseline_modelScan(
     # neuronsFirstHiddenLayer = (((num_variables+1)*2)/3)
     neuronsHiddenLayer = []
     neuronsInputLayer = num_variables
-    for x in xrange(1,10):
+    for x in range(1,10):
         neuronsHiddenLayer.append((((neuronsInputLayer+1)*2)/3))
         neuronsInputLayer = neuronsHiddenLayer[x]
     if (nHiddenLayer>=1):
@@ -612,6 +612,9 @@ def main():
     print('hyp_param_scan   = %s'%args.hyp_param_scan)
     print('GridSearch       = %s'%args.GridSearch)
     print('RandomSearch     = %s'%args.RandomSearch)
+    print('')
+    print('nHiddenLayer     = %s'%args.nHiddenLayer)
+    print('dropoutLayer     = %s'%args.dropoutLayer)
     print('---------------------------------------')
 
 
@@ -1009,7 +1012,7 @@ def main():
             # model = ANN_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            model = baseline_modelScan(num_variables, optimizer=optimizer, learn_rate=learn_rate,nHiddenLayer=nHiddenLayer  , dropoutLayer=dropoutLayer)
+            model = baseline_modelScan(num_variables, optimizer=optimizer, learn_rate=learn_rate,nHiddenLayer=args.nHiddenLayer  , dropoutLayer=args.dropoutLayer)
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
             # Tensorboard
