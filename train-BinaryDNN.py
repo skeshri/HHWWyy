@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-14
+# @Last Modified time: 2021-04-18
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
@@ -121,8 +121,21 @@ def load_data(inputPath,variables,criteria):
             sampleNames=key
             subdir_name = 'Signal'
             fileNames = [
-            'GluGluToHHTo2G4Q_node_cHHH1_2017'
+            # 'GluGluToHHTo2G4Q_node_cHHH1_2017'
             # 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
+            'GluGluToHHTo2G4Q_node_1_2017',
+            'GluGluToHHTo2G4Q_node_2_2017',
+            'GluGluToHHTo2G4Q_node_3_2017',
+            'GluGluToHHTo2G4Q_node_4_2017',
+            'GluGluToHHTo2G4Q_node_5_2017',
+            'GluGluToHHTo2G4Q_node_6_2017',
+            'GluGluToHHTo2G4Q_node_7_2017',
+            'GluGluToHHTo2G4Q_node_8_2017',
+            'GluGluToHHTo2G4Q_node_9_2017',
+            'GluGluToHHTo2G4Q_node_10_2017',
+            'GluGluToHHTo2G4Q_node_11_2017',
+            'GluGluToHHTo2G4Q_node_12_2017',
+            'GluGluToHHTo2G4Q_node_SM_2017',
             ]
             target=1
         else:
@@ -150,6 +163,45 @@ def load_data(inputPath,variables,criteria):
                 process_ID = 'HH'
             elif 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017' in filen:
                 treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_1_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_1_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_2_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_2_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_3_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_3_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_4_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_4_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_5_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_5_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_6_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_6_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_7_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_7_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_8_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_8_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_9_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_9_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_10_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_10_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_11_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_11_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_12_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_12_13TeV_HHWWggTag_1']
+                process_ID = 'HH'
+            elif 'GluGluToHHTo2G4Q_node_SM_2017' in filen:
+                treename=['GluGluToHHTo2G4Q_node_SM_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
             elif 'GluGluToHHTo2G4Q_node_cHHH1_2018' in filen:
                 treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
@@ -325,6 +377,7 @@ def load_data(inputPath,variables,criteria):
                     chunk_df['key']=key
                     chunk_df['target']=target
                     chunk_df['weight']=chunk_df["weight"]
+                    chunk_df['weight_NLO_SM']=chunk_df['weight_NLO_SM']
                     chunk_df['process_ID']=process_ID
                     chunk_df['classweight']=1.0
                     chunk_df['unweighted'] = 1.0
@@ -554,6 +607,38 @@ def new_model(
     model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
     return model
 
+
+def new_model2(
+               num_variables,
+               optimizer='Nadam',
+               activation='relu',
+               loss='binary_crossentropy',
+               dropout_rate=0.2,
+               init_mode='glorot_normal',
+               learn_rate=0.001,
+               metrics=METRICS
+               ):
+    model = Sequential()
+    model.add(Dense(20, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    #model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
+    #model.add(BatchNormalization())
+    #model.add(Activation('relu'))
+    model.add(Dense(14))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(10))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(7))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(1, activation="sigmoid"))
+    optimizer=Nadam(lr=learn_rate)
+    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
+    return model
+
 def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
@@ -694,6 +779,7 @@ def main():
     for key,var in variable_list:
         column_headers.append(key)
     column_headers.append('weight')
+    column_headers.append('weight_NLO_SM')
     column_headers.append('unweighted')
     column_headers.append('target')
     column_headers.append('key')
@@ -763,6 +849,7 @@ def main():
 
     # Event weights
     weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
+    weights_for_HH_NLO = traindataset.loc[traindataset['process_ID']=='HH', 'weight_NLO_SM']
     weights_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'weight']
     weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
     # weights_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'weight']
@@ -864,9 +951,14 @@ def main():
     # exit()
 
     # Remove column headers that aren't input variables
-    training_columns = column_headers[:-6]
+    # Remove column headers that aren't input variables
+    nonTrainingVariables = ['weight', 'weight_NLO_SM', 'kinWeight', 'unweighted', 'target', 'key', 'classweight', 'process_ID']
+    # training_columns = column_headers[:-6]
+    training_columns = [h for h in column_headers if h not in nonTrainingVariables]
+    print('#---------------------------------------')
     print('<train-DNN> Training features: ', training_columns)
     print('<train-DNN> len(Training features): ', len(training_columns))
+    print('#---------------------------------------')
 
     column_order_txt = '%s/column_order.txt' %(output_directory)
     column_order_file = open(column_order_txt, "wb")
@@ -893,9 +985,9 @@ def main():
 
     # Weights applied during training.
     if weights=='BalanceYields':
-        trainingweights = traindataset.loc[:,'classweight']*traindataset.loc[:,'weight']
+        trainingweights = traindataset.loc[:,'classweight']*traindataset.loc[:,'weight']*traindataset.loc[:,'weight_NLO_SM']
     if weights=='BalanceNonWeighted':
-        trainingweights = traindataset.loc[:,'classweight']
+        trainingweights = traindataset.loc[:,'classweight']*traindataset.loc[:,'weight_NLO_SM']
     trainingweights = np.array(trainingweights)
 
     ## Input Variable Correlation plot
@@ -1004,16 +1096,18 @@ def main():
             print("\toptimizer: ",optimizer)
 
             # Define model for analysis
-            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0) # callbacks
+            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.005, verbose=0) # callbacks
             # Learning rate schedular
+            LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
             if (args.dynamic_lr):
                 LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
             csv_logger = CSVLogger('%s/training.log'%(output_directory), separator=',', append=True) # callbacks
             # model = ANN_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            model = baseline_modelScan(num_variables, optimizer=optimizer, learn_rate=learn_rate,nHiddenLayer=args.nHiddenLayer  , dropoutLayer=args.dropoutLayer)
+            # model = baseline_modelScan(num_variables, optimizer=optimizer, learn_rate=learn_rate,nHiddenLayer=args.nHiddenLayer  , dropoutLayer=args.dropoutLayer)
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            model = new_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -1039,8 +1133,10 @@ def main():
                 print('#---------------------------------------')
                 print('#    sampleweight True                 #')
                 print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])')
+                # print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger,LearnRateScheduler])')
                 print('#---------------------------------------')
                 history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
+                # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger,LearnRateScheduler])
             else:
                 print('#---------------------------------------------------------------------------')
                 print('#    without dynamic_learn rate, no sampleweight, no classweight           #')
