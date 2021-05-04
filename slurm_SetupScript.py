@@ -2,7 +2,7 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-14
+# @Last Modified time: 2021-05-04
 
 ##
 ## USER MODIFIED STRING
@@ -19,6 +19,8 @@ parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=
 parser.add_argument("-e", "--epochs", type=int, default=10, help = "Number of epochs to train")
 parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
 parser.add_argument("-o", "--optimizer", type=str, default="Nadam", help = "Name of optimizer to train with")
+parser.add_argument("-a", "--activation", type=str, default="relu", help = "activation to be used. default is the relu")
+parser.add_argument("-dropout_rate", "--dropout_rate", type=float, default=0.2, help = "dropout rate to be used. Default value is 0.2")
 parser.add_argument('-cw', '--classweight', dest='classweight', help='classweight to use', default=False, type=bool)
 parser.add_argument('-sw', '--sampleweight', dest='sampleweight', help='sampleweight to use', default=False, type=bool)
 parser.add_argument("-nHiddenLayer", "--nHiddenLayer", type=int, default=1, help = "Number of Hidden layers")
@@ -37,24 +39,27 @@ if args.scan:
   CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
   # CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
 elif args.dynamic_lr:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -dlr "+str(args.dynamic_lr)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -dlr "+str(args.dynamic_lr)
 elif args.classweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) +" -cw "+str(args.classweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -cw "+str(args.classweight)
 elif args.sampleweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) +" -sw "+str(args.sampleweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -sw "+str(args.sampleweight)
 else:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer)
 #===================================================================
 import os
 def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
         os.makedirs(dir)
-        # os.system("cp dnn_parameter.json "+dir)
-        os.system("cp  "+args.json+" "+dir)
-        os.system("cp train-BinaryDNN.py "+dir)
+
+def CopyImportFiles(dir):
+    # os.system("cp dnn_parameter.json "+dir)
+    os.system("cp  "+args.json+" "+dir)
+    os.system("cp train-BinaryDNN.py "+dir)
 
 check_dir(LogDirPath.replace("//","/"))
+CopyImportFiles(LogDirPath.replace("//","/"))
 
 from datetime import datetime
 CURRENT_DATETIME = datetime.now()

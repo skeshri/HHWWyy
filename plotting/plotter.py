@@ -107,6 +107,13 @@ class plotter(object):
         fpr_keras_train, tpr_keras_train, thresholds_keras_train = roc_curve(Y_train, y_pred_keras_train)
         auc_keras_train = auc(fpr_keras_train, tpr_keras_train)
 
+        print('#---------------------------------------')
+        print('#    Print ROC AUC                     #')
+        print('#---------------------------------------')
+        print("     ROC AUC (Test area ) = {:.3f}".format(auc_keras_test))
+        print("     ROC AUC (Train area) = {:.3f}".format(auc_keras_train))
+        print('#---------------------------------------')
+
         self.fig, self.ax1 = plt.subplots(ncols=1, figsize=(10,10))
         plt.plot([0, 1], [0, 1], 'k--')
         plt.plot(fpr_keras_test, tpr_keras_test, label='Test (area = {:.3f})'.format(auc_keras_test))

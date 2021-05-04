@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-04-18
+# @Last Modified time: 2021-05-04
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
@@ -113,6 +113,8 @@ def load_data(inputPath,variables,criteria):
     """
     my_cols_list=variables
     print ("Variable list: ",my_cols_list)
+    print ("Variable list[-5]: ",my_cols_list[:-5])
+    print ("Variable list[-6]: ",my_cols_list[:-6])
     data = pd.DataFrame(columns=my_cols_list)
     keys=['HH','bckg']
     for key in keys :
@@ -125,17 +127,17 @@ def load_data(inputPath,variables,criteria):
             # 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
             'GluGluToHHTo2G4Q_node_1_2017',
             'GluGluToHHTo2G4Q_node_2_2017',
-            'GluGluToHHTo2G4Q_node_3_2017',
-            'GluGluToHHTo2G4Q_node_4_2017',
-            'GluGluToHHTo2G4Q_node_5_2017',
-            'GluGluToHHTo2G4Q_node_6_2017',
-            'GluGluToHHTo2G4Q_node_7_2017',
-            'GluGluToHHTo2G4Q_node_8_2017',
-            'GluGluToHHTo2G4Q_node_9_2017',
-            'GluGluToHHTo2G4Q_node_10_2017',
-            'GluGluToHHTo2G4Q_node_11_2017',
-            'GluGluToHHTo2G4Q_node_12_2017',
-            'GluGluToHHTo2G4Q_node_SM_2017',
+            # 'GluGluToHHTo2G4Q_node_3_2017',
+            # 'GluGluToHHTo2G4Q_node_4_2017',
+            # 'GluGluToHHTo2G4Q_node_5_2017',
+            # 'GluGluToHHTo2G4Q_node_6_2017',
+            # 'GluGluToHHTo2G4Q_node_7_2017',
+            # 'GluGluToHHTo2G4Q_node_8_2017',
+            # 'GluGluToHHTo2G4Q_node_9_2017',
+            # 'GluGluToHHTo2G4Q_node_10_2017',
+            # 'GluGluToHHTo2G4Q_node_11_2017',
+            # 'GluGluToHHTo2G4Q_node_12_2017',
+            # 'GluGluToHHTo2G4Q_node_SM_2017',
             ]
             target=1
         else:
@@ -362,30 +364,56 @@ def load_data(inputPath,variables,criteria):
             filename_fullpath = inputPath+"/"+fileName+".root"
             print("Input file: ", filename_fullpath)
             tfile = ROOT.TFile(filename_fullpath)
-            for tname in treename:
-                ch_0 = tfile.Get("tagsDumper/trees/"+tname)
-                if ch_0 is not None :
-                    criteria_tmp = criteria
-                    #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
-                    # Create dataframe for ttree
-                    chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria_tmp)
-                    #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
-                    # This dataframe will be a chunk of the final total dataframe used in training
-                    chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
-                    # Add values for the process defined columns.
-                    # (i.e. the values that do not change for a given process).
-                    chunk_df['key']=key
-                    chunk_df['target']=target
-                    chunk_df['weight']=chunk_df["weight"]
-                    chunk_df['weight_NLO_SM']=chunk_df['weight_NLO_SM']
-                    chunk_df['process_ID']=process_ID
-                    chunk_df['classweight']=1.0
-                    chunk_df['unweighted'] = 1.0
-                    # Append this chunk to the 'total' dataframe
-                    data = data.append(chunk_df, ignore_index=True)
-                else:
-                    print("TTree == None")
-                ch_0.Delete()
+            if 'HH' in key:
+                for tname in treename:
+                    ch_0 = tfile.Get("tagsDumper/trees/"+tname)
+                    if ch_0 is not None :
+                        criteria_tmp = criteria
+                        #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
+                        # Create dataframe for ttree
+                        chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria_tmp)
+                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
+                        # This dataframe will be a chunk of the final total dataframe used in training
+                        chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
+                        # Add values for the process defined columns.
+                        # (i.e. the values that do not change for a given process).
+                        chunk_df['key']=key
+                        chunk_df['target']=target
+                        chunk_df['weight']=chunk_df["weight"]
+                        chunk_df['weight_NLO_SM']=chunk_df['weight_NLO_SM']
+                        chunk_df['process_ID']=process_ID
+                        chunk_df['classweight']=1.0
+                        chunk_df['unweighted'] = 1.0
+                        # Append this chunk to the 'total' dataframe
+                        data = data.append(chunk_df, ignore_index=True)
+                    else:
+                        print("TTree == None")
+                    ch_0.Delete()
+            else:
+                for tname in treename:
+                    ch_0 = tfile.Get("tagsDumper/trees/"+tname)
+                    if ch_0 is not None :
+                        criteria_tmp = criteria
+                        #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
+                        # Create dataframe for ttree
+                        chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-6], selection=criteria_tmp)
+                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
+                        # This dataframe will be a chunk of the final total dataframe used in training
+                        chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
+                        # Add values for the process defined columns.
+                        # (i.e. the values that do not change for a given process).
+                        chunk_df['key']=key
+                        chunk_df['target']=target
+                        chunk_df['weight']=chunk_df["weight"]
+                        chunk_df['weight_NLO_SM']=1.0
+                        chunk_df['process_ID']=process_ID
+                        chunk_df['classweight']=1.0
+                        chunk_df['unweighted'] = 1.0
+                        # Append this chunk to the 'total' dataframe
+                        data = data.append(chunk_df, ignore_index=True)
+                    else:
+                        print("TTree == None")
+                    ch_0.Delete()
             tfile.Close()
         if len(data) == 0 : continue
 
@@ -607,7 +635,6 @@ def new_model(
     model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
     return model
 
-
 def new_model2(
                num_variables,
                optimizer='Nadam',
@@ -639,6 +666,68 @@ def new_model2(
     model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
     return model
 
+def new_model3(
+               num_variables,
+               optimizer='Nadam',
+               activation='relu',
+               loss='binary_crossentropy',
+               dropout_rate=0.2,
+               init_mode='glorot_normal',
+               learn_rate=0.001,
+               metrics=METRICS
+               ):
+    model = Sequential()
+    model.add(Dense(20, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    #model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
+    #model.add(BatchNormalization())
+    #model.add(Activation('relu'))
+    model.add(Dense(10))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(10))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(4))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(1, activation="sigmoid"))
+    optimizer=Nadam(lr=learn_rate)
+    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
+    return model
+
+def new_model4(
+               num_variables,
+               optimizer='Nadam',
+               activation='relu',
+               loss='binary_crossentropy',
+               dropout_rate=0.2,
+               init_mode='glorot_normal',
+               learn_rate=0.001,
+               metrics=METRICS
+               ):
+    model = Sequential()
+    model.add(Dense(256, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(128))
+    model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(128))
+    model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(64))
+    model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dense(1, activation="sigmoid"))
+    optimizer=Nadam(lr=learn_rate)
+    model.compile(loss=loss,optimizer=optimizer,metrics=metrics)
+    return model
+
 def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
@@ -660,10 +749,12 @@ def main():
     parent_parser.add_argument('-j', '--json', dest='json', help='input variable json file', default='input_variables.json', type=str)
 
     parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
-    parent_parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
     parent_parser.add_argument("-e", "--epochs", type=int, default=200, help = "Number of epochs to train")
     parent_parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
     parent_parser.add_argument("-o", "--optimizer", type=str, default="Nadam", help = "Name of optimizer to train with")
+    parent_parser.add_argument("-a", "--activation", type=str, default="relu", help = "activation to be used. default is the relu")
+    parent_parser.add_argument("-d", "--dropout_rate", type=float, default=0.2, help = "dropout rate to be used. Default value is 0.2")
+    parent_parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
 
     parent_parser.add_argument('-p', '--para', dest='hyp_param_scan', help='Option to run hyper-parameter scan', default=False, type=bool)
     parent_parser.add_argument('-g', '--GridSearch', dest='GridSearch', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=False, type=bool)
@@ -693,6 +784,8 @@ def main():
     print('epochs           = %s'%args.epochs)
     print('batch_size       = %s'%args.batch_size)
     print('optimizer        = %s'%args.optimizer)
+    print('activation       = %s'%args.activation)
+    print('dropout_rate     = %s'%args.dropout_rate)
     print('')
     print('hyp_param_scan   = %s'%args.hyp_param_scan)
     print('GridSearch       = %s'%args.GridSearch)
@@ -700,7 +793,7 @@ def main():
     print('')
     print('nHiddenLayer     = %s'%args.nHiddenLayer)
     print('dropoutLayer     = %s'%args.dropoutLayer)
-    print('---------------------------------------')
+    print('#---------------------------------------')
 
 
     do_model_fit = args.train_model
@@ -715,11 +808,13 @@ def main():
 
     hyp_param_scan=args.hyp_param_scan
     # Set model hyper-parameters
-    weights=args.weights
-    optimizer = args.optimizer
-    validation_split=0.1
-    GridSearch = args.GridSearch
-    RandomSearch = args.RandomSearch
+    weights         = args.weights
+    optimizer       = args.optimizer
+    activation      = args.activation
+    dropout_rate    = args.dropout_rate
+    validation_split= 0.1
+    GridSearch      = args.GridSearch
+    RandomSearch    = args.RandomSearch
 
     # Create instance of output directory where all results are saved.
     output_directory = 'HHWWyyDNN_binary_%s_%s/' % (suffix,weights)
@@ -727,23 +822,23 @@ def main():
 
     # hyper-parameter scan results
     if weights == 'BalanceNonWeighted':
-        learn_rate = args.learnRate
-        epochs = args.epochs
-        batch_size= args.batch_size
-        optimizer= args.optimizer
+        learn_rate  = args.learnRate
+        epochs      = args.epochs
+        batch_size  = args.batch_size
+        optimizer   = args.optimizer
     if weights == 'BalanceYields':
         learn_rate  = args.learnRate
-        epochs  = args.epochs
-        batch_size= args.batch_size
-        optimizer= args.optimizer
+        epochs      = args.epochs
+        batch_size  = args.batch_size
+        optimizer   = args.optimizer
 
-    print('---------------------------------------')
+    print('#---------------------------------------')
     print("Input DNN parameters:")
     print("\tepochs: ",epochs)
     print("\tbatch_size: ",batch_size)
     print("\tlearn_rate: ",learn_rate)
     print("\toptimizer: ",optimizer)
-    print('---------------------------------------')
+    print('#---------------------------------------')
 
     """
     Before we start save git patch. This will be helpful in debug the code later or taking care of the differences between many traning directory.
@@ -1096,7 +1191,7 @@ def main():
             print("\toptimizer: ",optimizer)
 
             # Define model for analysis
-            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.005, verbose=0) # callbacks
+            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0) # callbacks
             # Learning rate schedular
             LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
             if (args.dynamic_lr):
@@ -1107,7 +1202,9 @@ def main():
             # model = baseline_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = baseline_modelScan(num_variables, optimizer=optimizer, learn_rate=learn_rate,nHiddenLayer=args.nHiddenLayer  , dropoutLayer=args.dropoutLayer)
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            model = new_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            # model = new_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            # model = new_model3(num_variables, optimizer=optimizer, learn_rate=learn_rate)
+            model = new_model4(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -1122,7 +1219,10 @@ def main():
                 print('#    dynamic learn rate True           #')
                 print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])')
                 print('#---------------------------------------')
-                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
+                # Sample Weight
+                # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,LearnRateScheduler,csv_logger])
+                # Class Weight
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,class_weight=class_weight,callbacks=[early_stopping_monitor,csv_logger,LearnRateScheduler])
             elif args.classweight:
                 print('#---------------------------------------')
                 print('#    classweight: True                 #')
@@ -1133,10 +1233,8 @@ def main():
                 print('#---------------------------------------')
                 print('#    sampleweight True                 #')
                 print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])')
-                # print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=1,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger,LearnRateScheduler])')
                 print('#---------------------------------------')
                 history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger])
-                # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,sample_weight=trainingweights,callbacks=[early_stopping_monitor,csv_logger,LearnRateScheduler])
             else:
                 print('#---------------------------------------------------------------------------')
                 print('#    without dynamic_learn rate, no sampleweight, no classweight           #')
