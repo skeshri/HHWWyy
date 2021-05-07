@@ -566,7 +566,7 @@ class plotter(object):
         test_SvsBSep = "{0:.5g}".format(self.GetSeparation(histo_test_sig,histo_test_bckg))
 
         S_v_B_train_sep = 'SvsB train Sep.: %s' % ( train_SvsBSep )
-        self.ax.annotate(S_v_B_train_sep,  xy=(0.4, 2.5), xytext=(0.4, 2.5), fontsize=11)
+        self.ax.annotate(S_v_B_train_sep,  xy=(0.4, 2.0), xytext=(0.4, 2.0), fontsize=11)
         S_v_B_test_sep = 'SvsB test Sep.: %s' % ( test_SvsBSep )
         self.ax.annotate(S_v_B_test_sep,  xy=(0.4, 1.75), xytext=(0.4, 1.5), fontsize=11)
 

@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-05-04
+# @Last Modified time: 2021-05-05
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
@@ -728,6 +728,37 @@ def new_model4(
     model.compile(loss=loss,optimizer=optimizer,metrics=metrics)
     return model
 
+def new_model6(
+               num_variables,
+               optimizer='Nadam',
+               activation='relu',
+               loss='binary_crossentropy',
+               dropout_rate=0.2,
+               init_mode='glorot_normal',
+               learn_rate=0.001,
+               metrics=METRICS
+               ):
+    model = Sequential()
+    model.add(Dense(256, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    # model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(128))
+    # model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(128))
+    # model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(64))
+    # model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dense(1, activation="sigmoid"))
+    optimizer=Nadam(lr=learn_rate)
+    model.compile(loss=loss,optimizer=optimizer,metrics=metrics)
+    return model
+
 def check_dir(dir):
     if not os.path.exists(dir):
         print('mkdir: ', dir)
@@ -1204,7 +1235,8 @@ def main():
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = new_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = new_model3(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            model = new_model4(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            # model = new_model4(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            model = new_model6(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
