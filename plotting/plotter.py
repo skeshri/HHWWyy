@@ -1,5 +1,5 @@
 import numpy as np
-import shap
+# import shap
 import pandas
 import os
 import sklearn
@@ -84,19 +84,19 @@ class plotter(object):
 
         return
 
-    def corrFilter(self, x: pandas.DataFrame, bound: float):
-        """
-        this function filter the correlated variables as per the value of bound given
+    #def corrFilter(self, x: pandas.DataFrame, bound: float):
+    #    """
+    #    this function filter the correlated variables as per the value of bound given
 
-        :param      x:      dataframe for training
-        :type       x:      pandas dataframe
-        :param      bound:  value of bound
-        :type       bound:  float
-        """
-        xCorr = x.corr()
-        xFiltered = xCorr[((xCorr >= bound) | (xCorr <= -bound)) & (xCorr !=1.000)]
-        xFlattened = xFiltered.unstack().sort_values().drop_duplicates()
-        return xFlattened
+    #    :param      x:      dataframe for training
+    #    :type       x:      pandas dataframe
+    #    :param      bound:  value of bound
+    #    :type       bound:  float
+    #    """
+    #    xCorr = x.corr()
+    #    xFiltered = xCorr[((xCorr >= bound) | (xCorr <= -bound)) & (xCorr !=1.000)]
+    #    xFlattened = xFiltered.unstack().sort_values().drop_duplicates()
+    #    return xFlattened
 
     def ROC(self, model, X_test, Y_test, X_train, Y_train):
         y_pred_keras_test = model.predict(X_test).ravel()
