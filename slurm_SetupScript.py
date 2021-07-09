@@ -2,7 +2,7 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-05-11
+# @Last Modified time: 2021-07-02
 
 ##
 ## USER MODIFIED STRING
@@ -39,13 +39,13 @@ if args.scan:
   CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
   # CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
 elif args.dynamic_lr:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -dlr "+str(args.dynamic_lr)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -dlr "+str(args.dynamic_lr)
 elif args.classweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -cw "+str(args.classweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -cw "+str(args.classweight)
 elif args.sampleweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -sw "+str(args.sampleweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -sw "+str(args.sampleweight)
 else:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v3/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer)
 #===================================================================
 import os
 def check_dir(dir):
@@ -120,9 +120,8 @@ message = """#! /bin/bash
 # Replace the following lines with your real workload
 ########################################
 # TF: 2.3.0, python: 3.7.6
-source /cvmfs/sft.cern.ch/lcg/views/dev4cuda/latest/x86_64-centos7-gcc8-opt/setup.sh
-
-# TF: 2.1.0, python: 2.7.16
+# source /cvmfs/sft.cern.ch/lcg/views/dev4cuda/latest/x86_64-centos7-gcc8-opt/setup.sh
+source /cvmfs/sft.cern.ch/lcg/views/LCG_100cuda/x86_64-centos7-gcc8-opt/setup.sh
 # source /cvmfs/sft.cern.ch/lcg/views/dev4python2/latest/x86_64-centos7-gcc8-opt/setup.sh
 # pip install shap
 export QT_QPA_PLATFORM=offscreen
@@ -131,11 +130,15 @@ export XDG_RUNTIME_DIR=/hpcfs/bes/mlgpu/sharma/ML_GPU/someRuntimeFix
 date
 cd %s
 time(%s)
+echo ""
+echo "==================================================="
 time(python -m json.tool HHWWyyDNN_binary_%s_%s/model_serialised.json > HHWWyyDNN_binary_%s_%s/model_serialised_nice.json)
 echo ""
+echo "==================================================="
 echo ""
 echo "Convert the model.h5 to model.pb"
 time(python convert_hdf5_2_pb.py --input HHWWyyDNN_binary_%s_%s/model.h5 --output HHWWyyDNN_binary_%s_%s/model.pb)
+echo "==================================================="
 echo ""
 date
 ##########################################

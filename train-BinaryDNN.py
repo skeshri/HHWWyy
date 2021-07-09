@@ -6,7 +6,7 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-06-25
+# @Last Modified time: 2021-07-06
 import os
 # Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
@@ -60,10 +60,7 @@ from tensorflow.keras.callbacks import CSVLogger
 
 import shap
 from root_numpy import root2array, tree2array
-import sys
-sys.path.append('/hpcfs/bes/mlgpu/sharma/ML_GPU/HHWWyy/plotting/')
-#from plotting.plotter import plotter
-from plotter import plotter
+from plotting.plotter import plotter
 # import pydotplus as pydot
 import matplotlib as mpl
 mpl.rcParams['figure.figsize'] = (12, 10)
@@ -158,11 +155,15 @@ def load_data(inputPath,variables,criteria):
                 # 'GluGluHToGG_M125_TuneCP5_13TeV',
                 # 'VHToGG_M125_13TeV',
 
-                'datadrivenQCD_v2'
+                'datadrivenQCD_v2',
+                'GluGluToHHTo2B2G_node_cHHH1_2017'
             ]
             target=0
 
         for filen in fileNames:
+            if 'GluGluToHHTo2B2G_node_cHHH1_2017' in filen:
+                treename=['GluGluToHHTo2B2G_node_cHHH1_13TeV_HHWWggTag_1']
+                process_ID = 'bbgg'
             if 'GluGluToHHTo2G4Q_node_cHHH1_2017' in filen:
                 treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
                 process_ID = 'HH'
@@ -731,7 +732,7 @@ def new_model4(
     model.compile(loss=loss,optimizer=optimizer,metrics=metrics)
     return model
 
-def new_model6(
+def new_model5(
                num_variables,
                optimizer='Nadam',
                activation='relu',
@@ -898,7 +899,9 @@ def main():
     # Create plots subdirectory
     plots_dir = os.path.join(output_directory,'plots/')
     input_var_jsonFile = open(args.json,'r')
+    # selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7 && SumTwoMaxBjets<0.6186)'
     selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7)'
+    # selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7 && New_pTBasedSel_WW_mass < 200)'
 
     # Load Variables from .json
     variable_list = json.load(input_var_jsonFile,encoding="utf-8").items()
@@ -985,6 +988,7 @@ def main():
     weights_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'weight']
     # weights_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'weight']
     weights_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'weight']
+    weights_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'weight']
     # weights_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'weight']
     # weights_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'weight']
 
@@ -995,10 +999,11 @@ def main():
     QCDsum_weighted= sum(weights_for_QCD)
     # DYsum_weighted= sum(weights_for_DY)
     TTGsJetssum_weighted= sum(weights_for_TTGsJets)
+    bbggsum_weighted= sum(weights_for_bbgg)
     # WGsJetssum_weighted= sum(weights_for_WGsJets)
     # WWsum_weighted= sum(weights_for_WW)
     # bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
-    bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted
+    bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted + bbggsum_weighted
 
     nevents_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'unweighted']
     nevents_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'unweighted']
@@ -1007,6 +1012,7 @@ def main():
     nevents_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'unweighted']
     # nevents_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'unweighted']
     nevents_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'unweighted']
+    nevents_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'unweighted']
     # nevents_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'unweighted']
     # nevents_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'unweighted']
 
@@ -1017,10 +1023,11 @@ def main():
     QCDsum_unweighted= sum(nevents_for_QCD)
     # DYsum_unweighted= sum(nevents_for_DY)
     TTGsJetssum_unweighted= sum(nevents_for_TTGsJets)
+    bbggsum_unweighted= sum(nevents_for_bbgg)
     # WGsJetssum_unweighted= sum(nevents_for_WGsJets)
     # WWsum_unweighted= sum(nevents_for_WW)
     # bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
-    bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted
+    bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted + bbggsum_unweighted
 
     # HHsum_weighted = 2*HHsum_weighted
     # HHsum_unweighted = 2*HHsum_unweighted
@@ -1029,16 +1036,17 @@ def main():
         print('#---------------------------------------')
         print('#    BalanceYields: Print weight       #')
         print('#---------------------------------------')
-        print('HHsum_weighted= ' , HHsum_weighted)
-        print('Hggsum_weighted= ' , Hggsum_weighted)
-        print('DiPhotonsum_weighted= ', DiPhotonsum_weighted)
-        # print('GJetsum_weighted= ', GJetsum_weighted)
-        print('QCDsum_weighted= ', QCDsum_weighted)
-        # print('DYsum_weighted= ', DYsum_weighted)
-        print('TTGsJetssum_weighted= ', TTGsJetssum_weighted)
-        # print('WGsJetssum_weighted= ', WGsJetssum_weighted)
-        # print('WWsum_weighted= ', WWsum_weighted)
-        print('bckgsum_weighted= ', bckgsum_weighted)
+        print('{0:22} = {1:11}'.format('HHsum_weighted' , HHsum_weighted))
+        print('{0:22} = {1:11}'.format('Hggsum_weighted' , Hggsum_weighted))
+        print('{0:22} = {1:11}'.format('DiPhotonsum_weighted', DiPhotonsum_weighted))
+        # print('{0:22} = {1:11}'.format('GJetsum_weighted', GJetsum_weighted))
+        print('{0:22} = {1:11}'.format('QCDsum_weighted', QCDsum_weighted))
+        # print('{0:22} = {1:11}'.format('DYsum_weighted', DYsum_weighted))
+        print('{0:22} = {1:11}'.format('TTGsJetssum_weighted', TTGsJetssum_weighted))
+        print('{0:22} = {1:11}'.format('bbggsum_weighted ',bbggsum_weighted))
+        # print('{0:22} = {1:11}'.format('WGsJetssum_weighted', WGsJetssum_weighted))
+        # print('{0:22} = {1:11}'.format('WWsum_weighted', WWsum_weighted))
+        print('{0:22} = {1:11}'.format('bckgsum_weighted', bckgsum_weighted))
         print('New classweight: (HHsum_unweighted/HHsum_weighted) = ',(HHsum_unweighted/HHsum_weighted))
         print('#---------------------------------------')
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = HHsum_unweighted/HHsum_weighted
@@ -1062,6 +1070,7 @@ def main():
         print('QCDsum_unweighted= ', QCDsum_unweighted)
         # print('DYsum_unweighted= ', DYsum_unweighted)
         print('TTGsJetssum_unweighted= ', TTGsJetssum_unweighted)
+        print('bbggsum_unweighted = ', bbggsum_unweighted)
         # print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
         # print('WWsum_unweighted= ', WWsum_unweighted)
         print('bckgsum_unweighted= ', bckgsum_unweighted)
@@ -1074,6 +1083,7 @@ def main():
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         # traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
+        traindataset.loc[traindataset['process_ID']=='bbgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
 
@@ -1125,7 +1135,7 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.png')
     Plotter.save_plots(dir=plots_dir, filename=correlation_plot_file_name+'.pdf')
 
-    #print(Plotter.corrFilter(train_df, .15))
+    # print(Plotter.corrFilter(train_df, .15))
 
     # exit()
 
@@ -1238,7 +1248,8 @@ def main():
             # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = new_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
             # model = new_model3(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            model = new_model4(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            # model = new_model4(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            model = new_model5(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
             # model = new_model6(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
 
             # Tensorboard
@@ -1344,15 +1355,15 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
 
-    ## import shap
-    ## from tensorflow.compat.v1.keras.backend import get_session
-    ## tf.compat.v1.disable_v2_behavior()
-    #e = shap.DeepExplainer(model, X_train[:400, ])
-    ## shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
-    #shap_values = e.shap_values(X_test[:400, ])
-    #Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    #Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    #Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # import shap
+    # from tensorflow.compat.v1.keras.backend import get_session
+    # tf.compat.v1.disable_v2_behavior()
+    e = shap.DeepExplainer(model, X_train[:400, ])
+    # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
+    shap_values = e.shap_values(X_test[:400, ])
+    Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
     #e = shap.GradientExplainer(model, X_train[:100, ])
     #shap_values = e.shap_values(X_test[:100, ])
