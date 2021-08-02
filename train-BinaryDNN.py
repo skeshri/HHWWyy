@@ -6,11 +6,14 @@
 # Code to train deep neural network
 # for HH->WWyy analysis.
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-07-06
+# @Last Modified time: 2021-08-03
 import os
+import sys
 # Next two files are to get rid of warning while traning on IHEP GPU from matplotlib
 import tempfile
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
@@ -34,6 +37,7 @@ from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import class_weight
 from sklearn.metrics import log_loss
+from sklearn.metrics import f1_score, accuracy_score, confusion_matrix
 
 import tensorflow as tf
 from tensorflow import keras
@@ -155,8 +159,8 @@ def load_data(inputPath,variables,criteria):
                 # 'GluGluHToGG_M125_TuneCP5_13TeV',
                 # 'VHToGG_M125_13TeV',
 
-                'datadrivenQCD_v2',
-                'GluGluToHHTo2B2G_node_cHHH1_2017'
+                # 'GluGluToHHTo2B2G_node_cHHH1_2017',
+                'datadrivenQCD_v2'
             ]
             target=0
 
@@ -611,6 +615,37 @@ def gscv_model(
         model.compile(loss='binary_crossentropy',optimizer=Adagrad(lr=learn_rate),metrics=metrics)
     return model
 
+def SL_MultiClassModel(
+               num_variables,
+               optimizer='Nadam',
+               activation='relu',
+               loss='binary_crossentropy',
+               dropout_rate=0.2,
+               init_mode='glorot_normal',
+               learn_rate=0.001,
+               metrics=METRICS
+               ):
+    model = Sequential()
+    model.add(Dense(64, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(32,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(16,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(8,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(4,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Dense(1, activation="sigmoid"))
+    optimizer=Nadam(lr=learn_rate)
+    model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
+    return model
+
 def new_model(
                num_variables,
                optimizer='Nadam',
@@ -701,7 +736,7 @@ def new_model3(
     model.compile(loss='binary_crossentropy',optimizer=optimizer,metrics=metrics)
     return model
 
-def new_model4(
+def new_model5(
                num_variables,
                optimizer='Nadam',
                activation='relu',
@@ -732,7 +767,7 @@ def new_model4(
     model.compile(loss=loss,optimizer=optimizer,metrics=metrics)
     return model
 
-def new_model5(
+def new_model6(
                num_variables,
                optimizer='Nadam',
                activation='relu',
@@ -744,19 +779,39 @@ def new_model5(
                ):
     model = Sequential()
     model.add(Dense(256, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
-    # model.add(BatchNormalization())
     model.add(Activation(activation))
     model.add(Dropout(dropout_rate))
     model.add(Dense(128))
-    # model.add(BatchNormalization())
     model.add(Activation(activation))
     model.add(Dropout(dropout_rate))
     model.add(Dense(128))
-    # model.add(BatchNormalization())
     model.add(Activation(activation))
     model.add(Dropout(dropout_rate))
     model.add(Dense(64))
-    # model.add(BatchNormalization())
+    model.add(Activation(activation))
+    model.add(Dense(1, activation="sigmoid"))
+    optimizer=Nadam(lr=learn_rate)
+    model.compile(loss=loss,optimizer=optimizer,metrics=metrics)
+    return model
+
+def new_model7(
+               num_variables,
+               optimizer='Nadam',
+               activation='relu',
+               loss='binary_crossentropy',
+               dropout_rate=0.2,
+               init_mode='glorot_normal',
+               learn_rate=0.001,
+               metrics=METRICS
+               ):
+    model = Sequential()
+    model.add(Dense(256, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(Activation(activation))
+    model.add(Dense(128))
+    model.add(Activation(activation))
+    model.add(Dense(128))
+    model.add(Activation(activation))
+    model.add(Dense(64))
     model.add(Activation(activation))
     model.add(Dense(1, activation="sigmoid"))
     optimizer=Nadam(lr=learn_rate)
@@ -783,6 +838,7 @@ def main():
     parent_parser.add_argument('-sw', '--sampleweight', dest='sampleweight', help='sampleweight to use', default=False, type=bool)
     parent_parser.add_argument('-j', '--json', dest='json', help='input variable json file', default='input_variables.json', type=str)
 
+    parent_parser.add_argument("-ModelToUse", "--ModelToUse", type=str, default="FH_ANv5", help = "Name of optimizer to train with")
     parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
     parent_parser.add_argument("-e", "--epochs", type=int, default=200, help = "Number of epochs to train")
     parent_parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
@@ -906,6 +962,23 @@ def main():
     # Load Variables from .json
     variable_list = json.load(input_var_jsonFile,encoding="utf-8").items()
 
+    # Earlier this framework is keeping .csv file in the output directory of
+    # a particular run. But this takes lots of time in reading the same data
+    # again and again. So, now I am sending the .csv file into the directory named
+    # with the same name as the json file.
+    #
+    # NOTE (IMP): If the list of variable changes then change the name of
+    # json file. Else it will read the old list of input variables. If you
+    # want to keep the same name of json file then remove the directory that
+    # corresponds to this name (it it exits).
+    #
+    # TO-DO: Make the code intelligent so that it will first check if the
+    # input variables is exactly same as the one that already exits. If yes,
+    # then delete the old entry and create a new one.
+    CSV_file_Dir_Name = (args.json).replace(".json","")
+    if not os.path.isdir(CSV_file_Dir_Name): os.mkdir(CSV_file_Dir_Name)
+    os.system('cp '+args.json +' '+CSV_file_Dir_Name+"/") # also copy the json file to the new created directory
+
     # Create list of headers for dataset .csv
     column_headers = []
     for key,var in variable_list:
@@ -920,7 +993,8 @@ def main():
 
     # Load ttree into .csv including all variables listed in column_headers
     print('<train-DNN> Input file path: ', inputs_file_path)
-    outputdataframe_name = '%s/output_dataframe.csv' %(output_directory)
+    # outputdataframe_name = '%s/output_dataframe.csv' %(output_directory)
+    outputdataframe_name = '%s/output_dataframe.csv' %(CSV_file_Dir_Name)
     if os.path.isfile(outputdataframe_name) and (args.load_dataset == 0):
         """Load dataset or not
 
@@ -984,49 +1058,31 @@ def main():
     weights_for_HH_NLO = traindataset.loc[traindataset['process_ID']=='HH', 'weight_NLO_SM']
     weights_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'weight']
     weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
-    # weights_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'weight']
     weights_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'weight']
-    # weights_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'weight']
     weights_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'weight']
     weights_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'weight']
-    # weights_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'weight']
-    # weights_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'weight']
 
     HHsum_weighted= sum(weights_for_HH)
     Hggsum_weighted= sum(weights_for_Hgg)
     DiPhotonsum_weighted= sum(weights_for_DiPhoton)
-    # GJetsum_weighted= sum(weights_for_GJet)
     QCDsum_weighted= sum(weights_for_QCD)
-    # DYsum_weighted= sum(weights_for_DY)
     TTGsJetssum_weighted= sum(weights_for_TTGsJets)
     bbggsum_weighted= sum(weights_for_bbgg)
-    # WGsJetssum_weighted= sum(weights_for_WGsJets)
-    # WWsum_weighted= sum(weights_for_WW)
-    # bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted + GJetsum_weighted + QCDsum_weighted + DYsum_weighted + TTGsJetssum_weighted + WGsJetssum_weighted + WWsum_weighted
     bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted + bbggsum_weighted
 
     nevents_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'unweighted']
     nevents_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'unweighted']
     nevents_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'unweighted']
-    # nevents_for_GJet = traindataset.loc[traindataset['process_ID']=='GJet', 'unweighted']
     nevents_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'unweighted']
-    # nevents_for_DY = traindataset.loc[traindataset['process_ID']=='DY', 'unweighted']
     nevents_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'unweighted']
     nevents_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'unweighted']
-    # nevents_for_WGsJets = traindataset.loc[traindataset['process_ID']=='WGsJets', 'unweighted']
-    # nevents_for_WW = traindataset.loc[traindataset['process_ID']=='WW', 'unweighted']
 
     HHsum_unweighted= sum(nevents_for_HH)
     Hggsum_unweighted= sum(nevents_for_Hgg)
     DiPhotonsum_unweighted= sum(nevents_for_DiPhoton)
-    # GJetsum_unweighted= sum(nevents_for_GJet)
     QCDsum_unweighted= sum(nevents_for_QCD)
-    # DYsum_unweighted= sum(nevents_for_DY)
     TTGsJetssum_unweighted= sum(nevents_for_TTGsJets)
     bbggsum_unweighted= sum(nevents_for_bbgg)
-    # WGsJetssum_unweighted= sum(nevents_for_WGsJets)
-    # WWsum_unweighted= sum(nevents_for_WW)
-    # bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + GJetsum_unweighted + QCDsum_unweighted + DYsum_unweighted + TTGsJetssum_unweighted + WGsJetssum_unweighted + WWsum_unweighted
     bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted + bbggsum_unweighted
 
     # HHsum_weighted = 2*HHsum_weighted
@@ -1039,25 +1095,17 @@ def main():
         print('{0:22} = {1:11}'.format('HHsum_weighted' , HHsum_weighted))
         print('{0:22} = {1:11}'.format('Hggsum_weighted' , Hggsum_weighted))
         print('{0:22} = {1:11}'.format('DiPhotonsum_weighted', DiPhotonsum_weighted))
-        # print('{0:22} = {1:11}'.format('GJetsum_weighted', GJetsum_weighted))
         print('{0:22} = {1:11}'.format('QCDsum_weighted', QCDsum_weighted))
-        # print('{0:22} = {1:11}'.format('DYsum_weighted', DYsum_weighted))
         print('{0:22} = {1:11}'.format('TTGsJetssum_weighted', TTGsJetssum_weighted))
         print('{0:22} = {1:11}'.format('bbggsum_weighted ',bbggsum_weighted))
-        # print('{0:22} = {1:11}'.format('WGsJetssum_weighted', WGsJetssum_weighted))
-        # print('{0:22} = {1:11}'.format('WWsum_weighted', WWsum_weighted))
         print('{0:22} = {1:11}'.format('bckgsum_weighted', bckgsum_weighted))
         print('New classweight: (HHsum_unweighted/HHsum_weighted) = ',(HHsum_unweighted/HHsum_weighted))
         print('#---------------------------------------')
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = HHsum_unweighted/HHsum_weighted
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        # traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        # traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
 
     if weights=='BalanceNonWeighted':
         print('#---------------------------------------')
@@ -1066,26 +1114,18 @@ def main():
         print('HHsum_unweighted= ' , HHsum_unweighted)
         print('Hggsum_unweighted= ' , Hggsum_unweighted)
         print('DiPhotonsum_unweighted= ', DiPhotonsum_unweighted)
-        # print('GJetsum_unweighted= ', GJetsum_unweighted)
         print('QCDsum_unweighted= ', QCDsum_unweighted)
-        # print('DYsum_unweighted= ', DYsum_unweighted)
         print('TTGsJetssum_unweighted= ', TTGsJetssum_unweighted)
         print('bbggsum_unweighted = ', bbggsum_unweighted)
-        # print('WGsJetssum_unweighted= ', WGsJetssum_unweighted)
-        # print('WWsum_unweighted= ', WWsum_unweighted)
         print('bckgsum_unweighted= ', bckgsum_unweighted)
         print('#---------------------------------------')
 
         traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = 1.
         traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        # traindataset.loc[traindataset['process_ID']=='GJet', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        # traindataset.loc[traindataset['process_ID']=='DY', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='bbgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        # traindataset.loc[traindataset['process_ID']=='WGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        # traindataset.loc[traindataset['process_ID']=='WW', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
 
     # exit()
 
@@ -1241,16 +1281,26 @@ def main():
             if (args.dynamic_lr):
                 LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
             csv_logger = CSVLogger('%s/training.log'%(output_directory), separator=',', append=True) # callbacks
-            # model = ANN_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            # model = baseline_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            # model = baseline_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            # model = baseline_modelScan(num_variables, optimizer=optimizer, learn_rate=learn_rate,nHiddenLayer=args.nHiddenLayer  , dropoutLayer=args.dropoutLayer)
-            # model = new_model(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            # model = new_model2(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            # model = new_model3(num_variables, optimizer=optimizer, learn_rate=learn_rate)
-            # model = new_model4(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
-            model = new_model5(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
-            # model = new_model6(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+
+            if args.ModelToUse == "SL":
+                model = SL_MultiClassModel(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            elif args.ModelToUse == "FH_ANv5":
+                model = new_model5(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            elif args.ModelToUse == "FH_ANv5_NoBN":
+                model = new_model6(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            elif args.ModelToUse == "FH_ANv5_NoBN_NoDO":
+                model = new_model6(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            elif args.ModelToUse == "SimpleV1":
+                model = ANN_model(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            elif args.ModelToUse == "SimpleV2":
+                model = baseline_model(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            else:
+                model = new_model6(num_variables, optimizer=optimizer, activation=activation, dropout_rate=dropout_rate, learn_rate=learn_rate)
+            print("Model used: {}".format(args.ModelToUse))
+            print("Model Summary:")
+            print("="*51)
+            model.summary()
+            print("="*51)
 
             # Tensorboard
             # logdir = "logs/scalars/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -1312,12 +1362,63 @@ def main():
     result_probs = model.predict(np.array(X_train))
     # result_classes = model.predict_classes(np.array(X_train))
     # model.predict_classes is going to be deprecated.. so one should use np.argmax
-    result_classes = np.argmax(model.predict(np.array(X_train)), axis=-1)
+    # result_classes = np.argmax(model.predict(np.array(X_train)), axis=-1)
+    result_classes = np.argmax(result_probs, axis=1)
 
     # Node probabilities for testing sample events
     result_probs_test = model.predict(np.array(X_test))
     # result_classes_test = model.predict_classes(np.array(X_test))
-    result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
+    # result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
+    result_classes_test = np.argmax(result_probs_test, axis=1)
+
+    y_pred = model.predict(X_test)
+    y_pred = np.argmax(y_pred, axis=-1)
+    y_test = np.argmax(Y_test, axis=-1)
+    # cm = confusion_matrix(y_test, y_pred)
+    print("Confusion matrix:")
+    print("=================")
+    # print(cm)
+    print("=================")
+
+    # plt.figure(figsize=(5,5))
+    # sns.heatmap(cm, annot=True, fmt="d")
+    # # plt.title('Confusion matrix @{:.2f}'.format(p))
+    # plt.title('Confusion matrix')
+    # plt.ylabel('Actual label')
+    # plt.xlabel('Predicted label')
+    # plt.tight_layout()
+    # plt.savefig(plots_dir + "/confusion_matrix.png")
+
+    # print("=================")
+    # print("f1_score")
+    # print("f1 score (binary)     : {}".format(f1_score(y_test, y_pred,average='binary')))
+    # print("f1 score (micro)     : {}".format(f1_score(y_test, y_pred,average='micro')))
+    # print("f1 score (macro)     : {}".format(f1_score(y_test, y_pred,average='macro')))
+    # print("f1 score (weighted)  : {}".format(f1_score(y_test, y_pred,average='weighted')))
+    # print("=================")
+
+    # print("f1_score")
+    # print("f1 score (binary, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='binary')))
+    # print("f1 score (micro, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='micro')))
+    # print("f1 score (macro, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='macro')))
+    # print("f1 score (weighted, labels=0,1)  : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='weighted')))
+    # print("=================")
+
+
+    # print("f1_score")
+    # print("f1 score (binary, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='binary')))
+    # print("f1 score (micro, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='micro')))
+    # print("f1 score (macro, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='macro')))
+    # print("f1 score (weighted, labels=0)  : {}".format(f1_score(y_test, y_pred,labels=[0],average='weighted')))
+    # print("=================")
+
+    # print("f1_score")
+    # print("f1 score (binary, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='binary')))
+    # print("f1 score (micro, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='micro')))
+    # print("f1 score (macro, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='macro')))
+    # print("f1 score (weighted, labels=1)  : {}".format(f1_score(y_test, y_pred,labels=[1],average='weighted')))
+
+    print("=================")
 
     # Store model in file
     model_output_name = os.path.join(output_directory,'model.h5')
@@ -1326,6 +1427,13 @@ def main():
     model.save_weights(weights_output_name)
     model_json = model.to_json()
     model_json_name = os.path.join(output_directory,'model_serialised.json')
+
+    ##-- Convert model to pb
+    CONVERT_COMMAND = "python convert_hdf5_2_pb.py --input %s/model.h5 --output %s/model.pb"%(output_directory, output_directory)
+    print("Converting model.h5 to model.pb...")
+    print(CONVERT_COMMAND)
+    os.system(CONVERT_COMMAND)
+
     with open(model_json_name,'w') as json_file:
         json_file.write(model_json)
     model.summary()
@@ -1355,19 +1463,22 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
 
-    # import shap
-    # from tensorflow.compat.v1.keras.backend import get_session
-    # tf.compat.v1.disable_v2_behavior()
+    print("="*51)
+    print("\tSHAP computation: DeepExplainer")
+    print("="*51)
     e = shap.DeepExplainer(model, X_train[:400, ])
-    # shap.explainers.deep.deep_tf.op_handlers["AddV2"] = shap.explainers.deep.deep_tf.passthrough
+    shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
     shap_values = e.shap_values(X_test[:400, ])
     Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
     Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
     Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
-    #e = shap.GradientExplainer(model, X_train[:100, ])
-    #shap_values = e.shap_values(X_test[:100, ])
-    #Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
+    print("\tSHAP computation: GradientExplainer")
+    e = shap.GradientExplainer(model, X_train[:100, ])
+    shap_values = e.shap_values(X_test[:100, ])
+    Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar(title="GradientExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar_all(title="GradientExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
     #e = shap.KernelExplainer(model.predict, X_train[:100, ])
     #shap_values = e.shap_values(X_test[:100, ])
     #Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:100, ],shap_values=shap_values, column_headers=column_headers)

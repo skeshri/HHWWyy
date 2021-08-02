@@ -2,17 +2,19 @@
 # @Author: Ram Krishna Sharma
 # @Date:   2021-04-06 12:05:34
 # @Last Modified by:   Ram Krishna Sharma
-# @Last Modified time: 2021-07-02
+# @Last Modified time: 2021-08-03
 
 ##
 ## USER MODIFIED STRING
 ##
 
+import time
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--dirTag', dest='dirTag', help='name of directory tag', default="TEST_args", type=str)
 parser.add_argument('-j', '--jobName', dest='jobName', help='Slurm job name', default="DNN", type=str)
 parser.add_argument('-s', '--scan', dest='scan', help='do RandomizedSearchCV scan or not', default=False, type=bool)
+parser.add_argument('-isTrain', '--isTrain', dest='isTrain', help='train model or not?', default=1, type=int)
 parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
 parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
 parser.add_argument('-lr', '--lr', dest='learnRate', help='Learn rate', default=0.1, type=float)
@@ -26,6 +28,11 @@ parser.add_argument('-sw', '--sampleweight', dest='sampleweight', help='samplewe
 parser.add_argument("-nHiddenLayer", "--nHiddenLayer", type=int, default=1, help = "Number of Hidden layers")
 parser.add_argument("-dropoutLayer", "--dropoutLayer", type=int, default=0, help = "If you want to include dropoutLayer with the first two hidden layers")
 parser.add_argument('-json', '--json', dest='json', help='input variable json file', default='input_variables.json', type=str)
+parser.add_argument('-c', dest="cutString", type=str, default="( 1.>0. )", help="cut selection to apply")
+parser.add_argument("-nlayers", "--nlayers", type=int, default=1, help = "Number of hidden layers in the network")
+parser.add_argument("-ModelToUse", "--ModelToUse", type=str, default="FH_ANv5", help = "Name of optimizer to train with")
+parser.add_argument("-BBggsum_weightFactor", "--BBggsum_weightFactor", type = float, default = 1., help = "Factor to adjust bbgg class weights")
+parser.add_argument("-ClassWeightTargetDividedby", "--ClassWeightTargetDividedby", type = float, default = 1., help = "Factor to adjust bbgg class weights")
 
 args = parser.parse_args()
 
@@ -36,16 +43,16 @@ LogDirPath = MacroPath + "/HHWWyyDNN_binary_"+dirTag+"_"+args.weights+"/"
 
 print ("args.scan: ",args.scan)
 if args.scan:
-  CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
-  # CommandToRun = "python train-BinaryDNN.py -t 1 -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
+  CommandToRun = "python train-BinaryDNN.py -t "+ str(args.isTrain) + " -ModelToUse "+ str(args.ModelToUse) +" -s "+dirTag+" -p 1 -g 0 -r 1"  # Scan using RandomizedSearchCV
+  # CommandToRun = "python train-BinaryDNN.py -t "+ str(args.isTrain) + " -ModelToUse "+ str(args.ModelToUse) +" -s "+dirTag+" -p 1 -g 1 -r 0"  # Scan using RandomizedSearchCV
 elif args.dynamic_lr:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -dlr "+str(args.dynamic_lr)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t "+ str(args.isTrain) + " -ModelToUse "+ str(args.ModelToUse) +" -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -dlr "+str(args.dynamic_lr)
 elif args.classweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -cw "+str(args.classweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t "+ str(args.isTrain) + " -ModelToUse "+ str(args.ModelToUse) +" -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -cw "+str(args.classweight)
 elif args.sampleweight:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -sw "+str(args.sampleweight)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t "+ str(args.isTrain) + " -ModelToUse "+ str(args.ModelToUse) +" -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer) + " -a " + str(args.activation) + " -d " + str(args.dropout_rate) +" -sw "+str(args.sampleweight)
 else:
-  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t 1 -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer)
+  CommandToRun = "python train-BinaryDNN.py -i /hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v5_BScoreBugFix/ -t "+ str(args.isTrain) + " -ModelToUse "+ str(args.ModelToUse) +" -s "+dirTag+" -w "+args.weights +" -lr "+str(args.learnRate)+" -e "+str(args.epochs)+" -b "+str(args.batch_size)+" -o "+args.optimizer + " -j "+args.json + " -nHiddenLayer "+str(args.nHiddenLayer) + " -dropoutLayer "+str(args.dropoutLayer)
 #===================================================================
 import os
 def check_dir(dir):
@@ -136,10 +143,10 @@ time(python -m json.tool HHWWyyDNN_binary_%s_%s/model_serialised.json > HHWWyyDN
 echo ""
 echo "==================================================="
 echo ""
-echo "Convert the model.h5 to model.pb"
-time(python convert_hdf5_2_pb.py --input HHWWyyDNN_binary_%s_%s/model.h5 --output HHWWyyDNN_binary_%s_%s/model.pb)
-echo "==================================================="
-echo ""
+#echo "Convert the model.h5 to model.pb"
+#time(python convert_hdf5_2_pb.py --input HHWWyyDNN_binary_%s_%s/model.h5 --output HHWWyyDNN_binary_%s_%s/model.pb)
+#echo "==================================================="
+echo "Time stamp:"
 date
 ##########################################
 # Work load end
@@ -166,5 +173,15 @@ LimitOutTextFile.close()
 print("Log directory name: %s"%LogDirPath.replace("//","/"))
 print("Run slurm script using:")
 print("\tsbatch %s/%s"%(LogDirPath.replace("//","/"),SlurmScriptName))
-
 os.system("sbatch %s/%s"%(LogDirPath.replace("//","/"),SlurmScriptName))
+
+
+time.sleep(3)
+print("Check if *.out file exists or not...")
+for files_ in sorted(os.listdir(LogDirPath)):
+  # print ("files_: %s"%files_)
+  if files_.endswith(".out"):
+    print("tail -f {}".format(os.path.join(LogDirPath,files_)))
+  # else:
+    # print("No log file found...")
+

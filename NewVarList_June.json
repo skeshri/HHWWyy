@@ -5,6 +5,8 @@
   "Subleading_Photon_pt/CMS_hgg_mass": "\"F\"",
   "Leading_Photon_eta": "\"F\"",
   "Leading_Photon_phi": "\"F\"",
+  "New_DPhi_gg": "\"F\"",
+  "New_DR_gg": "\"F\"",
   "Subleading_Photon_eta": "\"F\"",
   "Subleading_Photon_phi": "\"F\"",
   "PhotonID_min": "\"F\"",

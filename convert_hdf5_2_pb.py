@@ -45,7 +45,13 @@ KS.set_learning_phase(0)
 
 print( 'args.input: ', args.input)
 model = load_model(args.input)
+print('#---------------------------------------------------------------#')
+print('#                    Model Summary: Start                       #')
+print('#---------------------------------------------------------------#')
 model.summary()
+print('#---------------------------------------------------------------#')
+print('#                    Model Summary: End                         #')
+print('#---------------------------------------------------------------#')
 
 #raise RuntimeError("stop")
 
