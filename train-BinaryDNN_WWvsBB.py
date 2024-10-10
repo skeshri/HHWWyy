@@ -39,6 +39,7 @@ from sklearn.utils import class_weight
 from sklearn.metrics import log_loss
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix
 
+os.environ['KERAS_BACKEND'] = 'tensorflow'
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
