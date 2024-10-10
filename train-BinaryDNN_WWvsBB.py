@@ -46,7 +46,7 @@ from tensorflow.keras import regularizers
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import Dropout
@@ -56,14 +56,16 @@ from tensorflow.keras.optimizers import Adamax
 from tensorflow.keras.optimizers import Nadam
 from tensorflow.keras.optimizers import Adadelta
 from tensorflow.keras.optimizers import Adagrad
-from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
+from scikeras.wrappers import KerasClassifier, KerasRegressor
+#from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.callbacks import CSVLogger
 
 import shap
-from root_numpy import root2array, tree2array
+#from root_numpy import root2array, tree2array
+import uproot
 from plotting.plotter import plotter
 # import pydotplus as pydot
 import matplotlib as mpl
@@ -120,17 +122,18 @@ def load_data(inputPath,variables,criteria):
     print ("Variable list[-5]: ",my_cols_list[:-5])
     print ("Variable list[-6]: ",my_cols_list[:-6])
     data = pd.DataFrame(columns=my_cols_list)
-    keys=['HH','bckg']
+    keys=['sig','bckg']
     for key in keys :
         print('key: ', key)
-        if 'HH' in key:
+        if 'sig' in key:
             sampleNames=key
-            subdir_name = 'Signal'
+            #subdir_name = 'Signal'
+            subdir_name = ''
             fileNames = [
             # 'GluGluToHHTo2G4Q_node_cHHH1_2017'
             # 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
-            'GluGluToHHTo2G4Q_node_1_2017',
-            'GluGluToHHTo2G4Q_node_2_2017',
+            'GluGluHToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8',
+            'GluGluHToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8',
             # 'GluGluToHHTo2G4Q_node_3_2017',
             # 'GluGluToHHTo2G4Q_node_4_2017',
             # 'GluGluToHHTo2G4Q_node_5_2017',
@@ -146,7 +149,8 @@ def load_data(inputPath,variables,criteria):
             target=1
         else:
             sampleNames = key
-            subdir_name = 'Backgrounds'
+            #subdir_name = 'Backgrounds'
+            subdir_name = ''
             fileNames = [
                 # FH File Names
                 # 'DiPhotonJetsBox_MGG-80toInf_13TeV',
@@ -159,7 +163,7 @@ def load_data(inputPath,variables,criteria):
                 # 'GluGluHToGG_M125_TuneCP5_13TeV',
                 # 'VHToGG_M125_13TeV',
 
-                'GluGluToHHTo2B2G_node_cHHH1_2017'
+                'ZZTo2L2Nu'
                 # 'datadrivenQCD_v2'
             ]
             target=0
@@ -367,62 +371,81 @@ def load_data(inputPath,variables,criteria):
                 treename=['WW_TuneCP5_13TeV_pythia8_13TeV_HHWWggTag_1',
                 ]
                 process_ID = 'WW'
+            elif "GluGluHToZZTo2L2Nu" in filen:
+                treename=["Events"]
+                process_ID = "ggF"
+            elif "ZZTo2L2Nu" in filen:
+                treename=["Events"]
+                process_ID = "ZZ"
 
             fileName = os.path.join(subdir_name,filen)
             filename_fullpath = inputPath+"/"+fileName+".root"
             print("Input file: ", filename_fullpath)
-            tfile = ROOT.TFile(filename_fullpath)
-            if 'HH' in key:
+            #tfile = ROOT.TFile(filename_fullpath)
+            tfile = uproot.open(filename_fullpath)
+
+            if 'sig' in key:
                 for tname in treename:
-                    ch_0 = tfile.Get("tagsDumper/trees/"+tname)
-                    if ch_0 is not None :
+                    #ch_0 = tfile.Get("tagsDumper/trees/"+tname)
+                    #ch_0 = tfile.Get(tname)
+                    if tfile is not None :
                         criteria_tmp = criteria
                         #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
                         # Create dataframe for ttree
-                        chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria_tmp)
+                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria_tmp)
+                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list)
+                        tree = tfile["Events"]
                         #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
                         # This dataframe will be a chunk of the final total dataframe used in training
-                        chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
+                        #chunk_df = tree.pandas.df(tree, columns=my_cols_list)
+                        chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
                         chunk_df['key']=key
                         chunk_df['target']=target
-                        chunk_df['weight']=chunk_df["weight"]
-                        chunk_df['weight_NLO_SM']=chunk_df['weight_NLO_SM']
+                        #chunk_df['weight']=chunk_df["weight"]
+                        #chunk_df['weight_NLO_SM']=chunk_df['weight_NLO_SM']
                         chunk_df['process_ID']=process_ID
                         chunk_df['classweight']=1.0
                         chunk_df['unweighted'] = 1.0
+                        chunk_df['mass'] = int(filen.split("_")[1].replace("M",""))
                         # Append this chunk to the 'total' dataframe
-                        data = data.append(chunk_df, ignore_index=True)
+                        data = pd.concat([data,chunk_df], ignore_index=True)
                     else:
                         print("TTree == None")
-                    ch_0.Delete()
+                    #ch_0.Delete()
             else:
                 for tname in treename:
-                    ch_0 = tfile.Get("tagsDumper/trees/"+tname)
-                    if ch_0 is not None :
+                    #ch_0 = tfile.Get("tagsDumper/trees/"+tname)
+                    #ch_0 = tfile.Get(tname)
+                    if tfile is not None :
                         criteria_tmp = criteria
                         #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
                         # Create dataframe for ttree
-                        chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-6], selection=criteria_tmp)
+                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-6], selection=criteria_tmp)
+                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list)
+                        tree = tfile["Events"]
                         #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
                         # This dataframe will be a chunk of the final total dataframe used in training
-                        chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
+                        chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
+                        #chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
                         chunk_df['key']=key
                         chunk_df['target']=target
-                        chunk_df['weight']=chunk_df["weight"]
-                        chunk_df['weight_NLO_SM']=1.0
+                        #chunk_df['weight']=chunk_df["weight"]
+                        #chunk_df['weight_NLO_SM']=1.0
                         chunk_df['process_ID']=process_ID
                         chunk_df['classweight']=1.0
                         chunk_df['unweighted'] = 1.0
+                        chunk_df['mass'] = 750
                         # Append this chunk to the 'total' dataframe
-                        data = data.append(chunk_df, ignore_index=True)
+                        #data = data.append(chunk_df, ignore_index=True)
+                        data = pd.concat([data,chunk_df], ignore_index=True)
                     else:
                         print("TTree == None")
-                    ch_0.Delete()
-            tfile.Close()
+                    #ch_0.Delete()
+            #tfile.Close()
         if len(data) == 0 : continue
 
     return data
@@ -747,7 +770,9 @@ def new_model5(
                metrics=METRICS
                ):
     model = Sequential()
-    model.add(Dense(256, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(Input(shape=(num_variables,)))
+    #model.add(Dense(256, input_dim=num_variables,kernel_regularizer=regularizers.l2(0.01)))
+    model.add(Dense(256, kernel_regularizer=regularizers.l2(0.01)))
     model.add(BatchNormalization())
     model.add(Activation(activation))
     model.add(Dropout(dropout_rate))
@@ -763,7 +788,7 @@ def new_model5(
     model.add(BatchNormalization())
     model.add(Activation(activation))
     model.add(Dense(1, activation="sigmoid"))
-    optimizer=Nadam(lr=learn_rate)
+    optimizer=Nadam(learning_rate=learn_rate)
     model.compile(loss=loss,optimizer=optimizer,metrics=metrics)
     return model
 
@@ -829,7 +854,7 @@ def main():
 
     usage = 'usage: %prog [options]'
     parent_parser = argparse.ArgumentParser(usage)
-    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=False, type=bool)
+    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=True, type=bool)
     parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
     parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='TEST', type=str)
     parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
@@ -840,7 +865,7 @@ def main():
 
     parent_parser.add_argument("-ModelToUse", "--ModelToUse", type=str, default="FH_ANv5", help = "Name of optimizer to train with")
     parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
-    parent_parser.add_argument("-e", "--epochs", type=int, default=200, help = "Number of epochs to train")
+    parent_parser.add_argument("-e", "--epochs", type=int, default=10, help = "Number of epochs to train")
     parent_parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
     parent_parser.add_argument("-o", "--optimizer", type=str, default="Nadam", help = "Name of optimizer to train with")
     parent_parser.add_argument("-a", "--activation", type=str, default="relu", help = "activation to be used. default is the relu")
@@ -960,7 +985,7 @@ def main():
     # selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7 && New_pTBasedSel_WW_mass < 200)'
 
     # Load Variables from .json
-    variable_list = json.load(input_var_jsonFile,encoding="utf-8").items()
+    variable_list = json.load(input_var_jsonFile).items()
 
     # Earlier this framework is keeping .csv file in the output directory of
     # a particular run. But this takes lots of time in reading the same data
@@ -1026,9 +1051,10 @@ def main():
     print(data.describe())
     print('#---------------------------------------')
     n = len(data)
-    nHH = len(data.iloc[data.target.values == 1])
+    #nHH = len(data.iloc[data.target.values == 1])
+    nsig = len(data.iloc[data.target.values == 1])
     nbckg = len(data.iloc[data.target.values == 0])
-    print("Total (train+validation) length of HH = %i, bckg = %i" % (nHH, nbckg))
+    print("Total (train+validation) length of HH = %i, bckg = %i" % (nsig, nbckg))
     bkg, sig = np.bincount(data['target'])
     total = bkg + sig
     print('Raw events:\n    Total: {}\n    Signal: {} ({:.2f}% of total)\n    Background: {} ({:.2f}% of total)\n'.format(
@@ -1054,40 +1080,40 @@ def main():
     print('<train-DNN> Validation dataset shape: ', valdataset.shape)
 
     # Event weights
-    weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
-    weights_for_HH_NLO = traindataset.loc[traindataset['process_ID']=='HH', 'weight_NLO_SM']
-    weights_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'weight']
-    weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
-    weights_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'weight']
-    weights_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'weight']
-    weights_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'weight']
+    #weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
+    #weights_for_HH_NLO = traindataset.loc[traindataset['process_ID']=='HH', 'weight_NLO_SM']
+    #weights_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'weight']
+    #weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
+    #weights_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'weight']
+    #weights_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'weight']
+    #weights_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'weight']
 
-    HHsum_weighted= sum(weights_for_HH)
-    Hggsum_weighted= sum(weights_for_Hgg)
-    DiPhotonsum_weighted= sum(weights_for_DiPhoton)
-    QCDsum_weighted= sum(weights_for_QCD)
-    TTGsJetssum_weighted= sum(weights_for_TTGsJets)
-    bbggsum_weighted= sum(weights_for_bbgg)
-    bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted + bbggsum_weighted
+    #HHsum_weighted= sum(weights_for_HH)
+    #Hggsum_weighted= sum(weights_for_Hgg)
+    #DiPhotonsum_weighted= sum(weights_for_DiPhoton)
+    #QCDsum_weighted= sum(weights_for_QCD)
+    #TTGsJetssum_weighted= sum(weights_for_TTGsJets)
+    #bbggsum_weighted= sum(weights_for_bbgg)
+    #bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted + bbggsum_weighted
 
-    nevents_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'unweighted']
-    nevents_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'unweighted']
-    nevents_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'unweighted']
-    nevents_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'unweighted']
-    nevents_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'unweighted']
-    nevents_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'unweighted']
+    #nevents_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'unweighted']
+    #nevents_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'unweighted']
+    #nevents_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'unweighted']
+    #nevents_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'unweighted']
+    #nevents_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'unweighted']
+    #nevents_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'unweighted']
 
-    HHsum_unweighted= sum(nevents_for_HH)
-    Hggsum_unweighted= sum(nevents_for_Hgg)
-    DiPhotonsum_unweighted= sum(nevents_for_DiPhoton)
-    QCDsum_unweighted= sum(nevents_for_QCD)
-    TTGsJetssum_unweighted= sum(nevents_for_TTGsJets)
-    bbggsum_unweighted= sum(nevents_for_bbgg)
-    bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted + bbggsum_unweighted
+    #HHsum_unweighted= sum(nevents_for_HH)
+    #Hggsum_unweighted= sum(nevents_for_Hgg)
+    #DiPhotonsum_unweighted= sum(nevents_for_DiPhoton)
+    #QCDsum_unweighted= sum(nevents_for_QCD)
+    #TTGsJetssum_unweighted= sum(nevents_for_TTGsJets)
+    #bbggsum_unweighted= sum(nevents_for_bbgg)
+    #bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted + bbggsum_unweighted
 
     # HHsum_weighted = 2*HHsum_weighted
     # HHsum_unweighted = 2*HHsum_unweighted
-
+    '''
     if weights=='BalanceYields':
         print('#---------------------------------------')
         print('#    BalanceYields: Print weight       #')
@@ -1126,12 +1152,13 @@ def main():
         traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
         traindataset.loc[traindataset['process_ID']=='bbgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-
+    '''
     # exit()
 
     # Remove column headers that aren't input variables
     # Remove column headers that aren't input variables
-    nonTrainingVariables = ['weight', 'weight_NLO_SM', 'kinWeight', 'unweighted', 'target', 'key', 'classweight', 'process_ID']
+    #nonTrainingVariables = ['weight', 'weight_NLO_SM', 'kinWeight', 'unweighted', 'target', 'key', 'classweight', 'process_ID']
+    nonTrainingVariables = ['target', 'key', 'classweight', 'process_ID']
     # training_columns = column_headers[:-6]
     training_columns = [h for h in column_headers if h not in nonTrainingVariables]
     print('#---------------------------------------')
@@ -1159,15 +1186,15 @@ def main():
     train_df = data.iloc[:traindataset.shape[0]]
 
     # Event weights if wanted
-    train_weights = traindataset['weight'].values
-    test_weights = valdataset['weight'].values
+    #train_weights = traindataset['weight'].values
+    #test_weights = valdataset['weight'].values
 
     # Weights applied during training.
-    if weights=='BalanceYields':
-        trainingweights = traindataset.loc[:,'classweight']*traindataset.loc[:,'weight']*traindataset.loc[:,'weight_NLO_SM']
-    if weights=='BalanceNonWeighted':
-        trainingweights = traindataset.loc[:,'classweight']*traindataset.loc[:,'weight_NLO_SM']
-    trainingweights = np.array(trainingweights)
+    #if weights=='BalanceYields':
+    #    trainingweights = traindataset.loc[:,'classweight']*traindataset.loc[:,'weight']*traindataset.loc[:,'weight_NLO_SM']
+    #if weights=='BalanceNonWeighted':
+    #    trainingweights = traindataset.loc[:,'classweight']*traindataset.loc[:,'weight_NLO_SM']
+    #trainingweights = np.array(trainingweights)
 
     ## Input Variable Correlation plot
     correlation_plot_file_name = 'correlation_plot'
@@ -1336,7 +1363,11 @@ def main():
                 print('#    without dynamic_learn rate, no sampleweight, no classweight           #')
                 print('#    Command:\n\thistory = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,callbacks=[early_stopping_monitor,csv_logger])')
                 print('#---------------------------------------------------------------------------')
-                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True,callbacks=[early_stopping_monitor,csv_logger])
+                print('###############  Data type and shape of input features ############')
+                print('type of X_train: {}, type of Y_train: {}, Shape of Xtrain: {}, shape of Ytrain: {}'.format(type(X_train),type(Y_train),X_train.shape,Y_train.shape))
+                print('###################################################################################')
+
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True) #,callbacks=[early_stopping_monitor,csv_logger])
             histories.append(history)
             labels.append(optimizer)
 

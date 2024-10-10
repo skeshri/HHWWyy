@@ -58,3 +58,24 @@ The script 'train-BinaryDNN.py' performs several tasks:
 ## The Plotting package
 
 ## Evaluating the networks performance
+
+
+## Setup for the new environment for python=3.11
+
+```
+conda create --name pdnn python=3.11   # create the environment for python=3.11
+conda activate pdnn  # activate the environment
+pip install -r requirement.txt  # install the required libraries
+python train-BinaryDNN.py -t 1 -i /eos/user/a/avijay/HZZ_mergedrootfiles/  # run the training 
+```
+
+
+ 
+
+
+
+
+
+
+
+
