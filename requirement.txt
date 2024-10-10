@@ -1,0 +1,8 @@
+seaborn
+matplotlib
+keras
+numpy
+tensorflow
+uproot
+shap
+scikeras
