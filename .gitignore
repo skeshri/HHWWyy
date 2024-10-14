@@ -34,3 +34,4 @@ __init__.py
 RunManySlurmCommand.sh
 input_variables*/
 *.patch
+xzz2l2nu_env/

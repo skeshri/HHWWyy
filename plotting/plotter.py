@@ -925,7 +925,10 @@ DY & %s \\ \hline
         if x is None:
           print('<plotter> No x defined. Leaving class function')
           return
-        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False, max_display=50)
+        # shap.summary_plot(shap_values[0], features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
+        # shap.summary_plot(shap_values[1], features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
+        shap.summary_plot(shap_values, features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
+
         plt.gca().set_title(title)
         plt.tight_layout()
         plt.savefig("{}/plots/{}.png".format(self.output_directory, title), bbox_inches='tight')

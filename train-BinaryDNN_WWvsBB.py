@@ -39,6 +39,7 @@ from sklearn.utils import class_weight
 from sklearn.metrics import log_loss
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix
 
+os.environ['KERAS_BACKEND'] = 'tensorflow'
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
@@ -398,6 +399,7 @@ def load_data(inputPath,variables,criteria):
                         #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
                         # This dataframe will be a chunk of the final total dataframe used in training
                         #chunk_df = tree.pandas.df(tree, columns=my_cols_list)
+                        # chunk_df = tree.arrays(my_cols_list[:-7],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
                         chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
@@ -427,6 +429,7 @@ def load_data(inputPath,variables,criteria):
                         tree = tfile["Events"]
                         #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
                         # This dataframe will be a chunk of the final total dataframe used in training
+                        # chunk_df = tree.arrays(my_cols_list[:-7],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
                         chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
                         #chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
                         # Add values for the process defined columns.
@@ -481,9 +484,10 @@ def ANN_model(
                    loss='binary_crossentropy',
                    dropout_rate=0.2,
                    init_mode='glorot_normal',
-                   learn_rate=0.001,
+                   learn_rate=0.01,
                    metrics=METRICS
                    ):
+    print("Model Running: {}".format(ANN_model.__name__))
     # strategy = tf.distribute.MirroredStrategy()
     # with strategy.scope():
     model = Sequential()
@@ -493,7 +497,7 @@ def ANN_model(
     if optimizer=='Adam':
         model.compile(loss=loss,optimizer=Adam(lr=learn_rate),metrics=metrics)
     if optimizer=='Nadam':
-        model.compile(loss=loss,optimizer=Nadam(lr=learn_rate),metrics=metrics)
+        model.compile(loss=loss,optimizer=Nadam(learning_rate=learn_rate),metrics=metrics)
     if optimizer=='Adamax':
         model.compile(loss=loss,optimizer=Adamax(lr=learn_rate),metrics=metrics)
     if optimizer=='Adadelta':
@@ -854,7 +858,7 @@ def main():
 
     usage = 'usage: %prog [options]'
     parent_parser = argparse.ArgumentParser(usage)
-    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=True, type=bool)
+    parent_parser.add_argument('-l', '--load_dataset', dest='load_dataset', help='Option to load dataset from root file (0=False, 1=True)', default=False, type=bool)
     parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
     parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='TEST', type=str)
     parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
@@ -863,9 +867,9 @@ def main():
     parent_parser.add_argument('-sw', '--sampleweight', dest='sampleweight', help='sampleweight to use', default=False, type=bool)
     parent_parser.add_argument('-j', '--json', dest='json', help='input variable json file', default='input_variables.json', type=str)
 
-    parent_parser.add_argument("-ModelToUse", "--ModelToUse", type=str, default="FH_ANv5", help = "Name of optimizer to train with")
+    parent_parser.add_argument("-ModelToUse", "--ModelToUse", type=str, default="SimpleV1", help = "Name of optimizer to train with")
     parent_parser.add_argument('-dlr', '--dynamic_lr', dest='dynamic_lr', help='vary learn rate with epoch', default=False, type=bool)
-    parent_parser.add_argument("-e", "--epochs", type=int, default=10, help = "Number of epochs to train")
+    parent_parser.add_argument("-e", "--epochs", type=int, default=1000, help = "Number of epochs to train")
     parent_parser.add_argument("-b", "--batch_size", type=int, default=100, help = "Number of batch_size to train")
     parent_parser.add_argument("-o", "--optimizer", type=str, default="Nadam", help = "Name of optimizer to train with")
     parent_parser.add_argument("-a", "--activation", type=str, default="relu", help = "activation to be used. default is the relu")
@@ -1020,14 +1024,15 @@ def main():
     print('<train-DNN> Input file path: ', inputs_file_path)
     # outputdataframe_name = '%s/output_dataframe.csv' %(output_directory)
     outputdataframe_name = '%s/output_dataframe.csv' %(CSV_file_Dir_Name)
+    print('<train-DNN> Output dataframe name: ', outputdataframe_name)
     if os.path.isfile(outputdataframe_name) and (args.load_dataset == 0):
         """Load dataset or not
 
         If one changes the input training variables then we have to reload dataset.
         Don't use the previous .csv file if you update the list of input variables.
         """
-        data = pandas.read_csv(outputdataframe_name)
         print('<train-DNN> Loading data .csv from: %s . . . . ' % (outputdataframe_name))
+        data = pandas.read_csv(outputdataframe_name)
     else:
         print('<train-DNN> Creating new data .csv @: %s . . . . ' % (inputs_file_path))
         data = load_data(inputs_file_path,column_headers,selection_criteria)
@@ -1186,8 +1191,8 @@ def main():
     train_df = data.iloc[:traindataset.shape[0]]
 
     # Event weights if wanted
-    #train_weights = traindataset['weight'].values
-    #test_weights = valdataset['weight'].values
+    train_weights = traindataset['weight'].values
+    test_weights = valdataset['weight'].values
 
     # Weights applied during training.
     #if weights=='BalanceYields':
@@ -1302,7 +1307,7 @@ def main():
             print("\toptimizer: ",optimizer)
 
             # Define model for analysis
-            early_stopping_monitor = EarlyStopping(patience=100, monitor='val_loss', min_delta=0.01, verbose=0) # callbacks
+            early_stopping_monitor = EarlyStopping(patience=21, monitor='val_loss', min_delta=0.01, verbose=0) # callbacks
             # Learning rate schedular
             LearnRateScheduler = LearningRateScheduler(custom_LearningRate_schedular,verbose=1) # callbacks
             if (args.dynamic_lr):
@@ -1367,7 +1372,8 @@ def main():
                 print('type of X_train: {}, type of Y_train: {}, Shape of Xtrain: {}, shape of Ytrain: {}'.format(type(X_train),type(Y_train),X_train.shape,Y_train.shape))
                 print('###################################################################################')
 
-                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True) #,callbacks=[early_stopping_monitor,csv_logger])
+                # history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True) #,callbacks=[early_stopping_monitor,csv_logger])
+                history = model.fit(X_train,Y_train,validation_split=validation_split,epochs=epochs,batch_size=batch_size,verbose=0,shuffle=True, callbacks=[early_stopping_monitor,csv_logger])
             histories.append(history)
             labels.append(optimizer)
 
@@ -1454,16 +1460,18 @@ def main():
     # Store model in file
     model_output_name = os.path.join(output_directory,'model.h5')
     model.save(model_output_name)
-    weights_output_name = os.path.join(output_directory,'model_weights.h5')
+    # model.save('my_model.keras')  # For saving the full model in the new Keras format
+    # weights_output_name = os.path.join(output_directory,'model_weights.h5')
+    weights_output_name = os.path.join(output_directory, 'model_weights.weights.h5')
     model.save_weights(weights_output_name)
     model_json = model.to_json()
     model_json_name = os.path.join(output_directory,'model_serialised.json')
 
-    ##-- Convert model to pb
-    CONVERT_COMMAND = "python convert_hdf5_2_pb.py --input %s/model.h5 --output %s/model.pb"%(output_directory, output_directory)
-    print("Converting model.h5 to model.pb...")
-    print(CONVERT_COMMAND)
-    os.system(CONVERT_COMMAND)
+    # ##-- Convert model to pb ; No need for this until we finalize the training.
+    # CONVERT_COMMAND = "python scripts/convert_hdf5_2_pb.py --input %s/model.h5 --output %s/model.pb"%(output_directory, output_directory)
+    # print("Converting model.h5 to model.pb...")
+    # print(CONVERT_COMMAND)
+    # os.system(CONVERT_COMMAND)
 
     with open(model_json_name,'w') as json_file:
         json_file.write(model_json)
@@ -1497,26 +1505,41 @@ def main():
     print("="*51)
     print("\tSHAP computation: DeepExplainer")
     print("="*51)
-    e = shap.DeepExplainer(model, X_train[:400, ])
-    shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
-    shap_values = e.shap_values(X_test[:400, ])
-    Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    print(X_test[:100, ].shape)
+    print(len(column_headers))
+    print(X_test.shape[1])
+    # e = shap.DeepExplainer(model, X_train[:400, ])
+    # shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
+    # shap_values = e.shap_values(X_test[:400, ])
+    # print(shap_values[0].shape)
+    # Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
-    print("\tSHAP computation: GradientExplainer")
-    e = shap.GradientExplainer(model, X_train[:100, ])
+    # print("\tSHAP computation: GradientExplainer")
+    # e = shap.GradientExplainer(model, X_train[:100, ])
+    # shap_values = e.shap_values(X_test[:100, ])
+    # Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot_bar(title="GradientExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot_bar_all(title="GradientExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+
+    def predict_proba_1(X):
+        return model.predict(X)[:, 0]
+
+    # e = shap.KernelExplainer(model.predict, X_train[:100, ])
+    e = shap.KernelExplainer(predict_proba_1, X_train[:100, ])
     shap_values = e.shap_values(X_test[:100, ])
-    Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
-    Plotter.plot_dot_bar(title="GradientExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    Plotter.plot_dot_bar_all(title="GradientExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    #e = shap.KernelExplainer(model.predict, X_train[:100, ])
-    #shap_values = e.shap_values(X_test[:100, ])
-    #Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:100, ],shap_values=shap_values, column_headers=column_headers)
-    #Plotter.plot_dot_bar(title="KernelExplainer_Bar_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
-    #Plotter.plot_dot_bar_all(title="KernelExplainer_bar_All_Var_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
 
-    # Create confusion matrices for training and testing performance
+    print("Model output shape on test set:", model.predict(X_test[:100, ]).shape)
+    print("SHAP values shape (class 0):", shap_values[0].shape)
+    print("SHAP values shape (class 1):", shap_values[1].shape)
+    print("Number of shap_values outputs:", len(shap_values))
+
+    Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:100, ],shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot_bar(title="KernelExplainer_Bar_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot_bar_all(title="KernelExplainer_bar_All_Var_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
+
+    # # Create confusion matrices for training and testing performance
     # Plotter.conf_matrix(original_encoded_train_Y,result_classes_train,train_weights,'index')
     # Plotter.save_plots(dir=plots_dir, filename='yields_norm_confusion_matrix_TRAIN.png')
     # Plotter.conf_matrix(original_encoded_test_Y,result_classes_test,test_weights,'index')
