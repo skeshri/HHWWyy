@@ -399,7 +399,8 @@ def load_data(inputPath,variables,criteria):
                         #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
                         # This dataframe will be a chunk of the final total dataframe used in training
                         #chunk_df = tree.pandas.df(tree, columns=my_cols_list)
-                        chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
+                        #chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
+                        chunk_df = tree.arrays(my_cols_list[:-7],library='pd', entry_stop=5000)
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
                         chunk_df['key']=key
@@ -1187,8 +1188,8 @@ def main():
     train_df = data.iloc[:traindataset.shape[0]]
 
     # Event weights if wanted
-    #train_weights = traindataset['weight'].values
-    #test_weights = valdataset['weight'].values
+    train_weights = traindataset['weight'].values
+    test_weights = valdataset['weight'].values
 
     # Weights applied during training.
     #if weights=='BalanceYields':
@@ -1455,13 +1456,14 @@ def main():
     # Store model in file
     model_output_name = os.path.join(output_directory,'model.h5')
     model.save(model_output_name)
-    weights_output_name = os.path.join(output_directory,'model_weights.h5')
+    #weights_output_name = os.path.join(output_directory,'model_weights.h5')
+    weights_output_name = os.path.join(output_directory,'model_weights.weights.h5')
     model.save_weights(weights_output_name)
     model_json = model.to_json()
     model_json_name = os.path.join(output_directory,'model_serialised.json')
 
     ##-- Convert model to pb
-    CONVERT_COMMAND = "python convert_hdf5_2_pb.py --input %s/model.h5 --output %s/model.pb"%(output_directory, output_directory)
+    CONVERT_COMMAND = "python scripts/convert_hdf5_2_pb.py --input %s/model.h5 --output %s/model.pb"%(output_directory, output_directory)
     print("Converting model.h5 to model.pb...")
     print(CONVERT_COMMAND)
     os.system(CONVERT_COMMAND)

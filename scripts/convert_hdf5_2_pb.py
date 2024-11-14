@@ -22,7 +22,8 @@ args = parser.parse_args()
 
 import tensorflow as tf
 from tensorflow.python.framework.graph_io import write_graph
-from tensorflow.python.framework.graph_util import convert_variables_to_constants
+#from tensorflow.python.framework.graph_util import convert_variables_to_constants
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 from tensorflow import keras
 
 # added this for batch normalization
@@ -36,12 +37,12 @@ from tensorflow.keras import backend as KS
 from tensorflow.keras.models import load_model
 
 # necessary !!!
-tf.compat.v1.disable_eager_execution()
-
+#tf.compat.v1.disable_eager_execution()
+tf.config.run_functions_eagerly(True)
 # added below two line for batch normalization
 # Reference: https://stackoverflow.com/a/57403976/2302094
 KS.clear_session()
-KS.set_learning_phase(0)
+#KS.set_learning_phase(0)
 
 print( 'args.input: ', args.input)
 model = load_model(args.input)
@@ -64,28 +65,29 @@ output_nodes = [model.outputs[0].name] #"main_output/Softmax"]#["output_node"]
 
 print("Input node name : {}".format(input_nodes[0]))
 print("Output node name: {}".format(output_nodes[0]))
-# with KS.get_session() as sess:
-with tf.compat.v1.keras.backend.get_session() as sess:
 
-    ops = sess.graph.get_operations()
-    const_graph = convert_variables_to_constants(sess, sess.graph.as_graph_def(add_shapes=True), [node.op.name for node in model.outputs])
-    #print( ([node.op.name for node in model.outputs]))
-    for node in model.outputs:
-        print( 'node.op.name: ' , node.op.name)
-    final_graph = const_graph
 
-    #for node in model.outputs :
-    #    shapes = node.op.attr[model.outputs[0].name]
-    #    print( (shapes.list.shape[0].dim[0].size))
-    #shape = final_graph.get_tensor_by_name(model.outputs[0].name) #.node(0) #final_graph.node(0).attr().at("shape").shape();
-    #print( ("read input layer shape  " , shape) #shape.dim_size() , graphDef.node(0).name()))
+# Get the concrete function from the model
+full_model = tf.function(lambda: model(tf.zeros((1, *model.input_shape[1:]))))
+full_model = full_model.get_concrete_function()
 
+# Convert the model to a frozen graph
+const_graph = convert_variables_to_constants_v2(full_model)
+
+# Print output node names
+for node in model.outputs:
+    print('node.name: ', node.name)
+
+final_graph = const_graph
+# Prepare output file name
 if args.output is None:
     input_base = os.path.basename(args.input)
     out_dir = ''
     out_file_name = args.input.split('/')[0]
-    print( 'out_file_name: ', out_file_name)
+    print('out_file_name: ', out_file_name)
     out_file = out_file_name + ".pb"
 else:
     out_dir, out_file = os.path.split(args.output)
+
+# Write the graph to a file
 write_graph(final_graph, out_dir, out_file, as_text=False)

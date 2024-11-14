@@ -99,6 +99,41 @@ class plotter(object):
     #    return xFlattened
 
     def ROC(self, model, X_test, Y_test, X_train, Y_train):
+        
+        combined = np.column_stack((X_train, Y_train))
+
+        # Remove rows with NaN values
+        combined = combined[~np.isnan(combined).any(axis=1)]
+
+        # Split back into features and target
+        X_train = combined[:, :-1]
+        Y_train = combined[:, -1]
+
+        # Repeat for the test data if necessary
+        combined_test = np.column_stack((X_test, Y_test))
+        combined_test = combined_test[~np.isnan(combined_test).any(axis=1)]
+
+        X_test = combined_test[:, :-1]
+        Y_test = combined_test[:, -1]
+
+
+
+        #train_df = pandas.concat([X_train, Y_train], axis=1)
+        #test_df = pandas.concat([X_test, Y_test], axis=1)
+
+        # Drop rows with any NaN values
+        #train_df_cleaned = train_df.dropna()
+        #test_df_cleaned = test_df.dropna()
+        
+        # Separate back into features and target
+        #X_train = train_df_cleaned.iloc[:, :-1].values
+        #Y_train = train_df_cleaned.iloc[:, -1].values
+        #X_test = test_df_cleaned.iloc[:, :-1].values
+        #Y_test = test_df_cleaned.iloc[:, -1].values
+
+        print(X_train.shape,Y_train.shape)
+        print(X_test.shape,Y_test.shape)
+
         y_pred_keras_test = model.predict(X_test).ravel()
         fpr_keras_test, tpr_keras_test, thresholds_keras_test = roc_curve(Y_test, y_pred_keras_test)
         auc_keras_test = auc(fpr_keras_test, tpr_keras_test)
