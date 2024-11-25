@@ -921,14 +921,24 @@ DY & %s \\ \hline
             counter = counter+1
 
         return
+
     def plot_dot(self, title, x, shap_values, column_headers):
         plt.figure()
         if x is None:
-          print('<plotter> No x defined. Leaving class function')
-          return
-        # shap.summary_plot(shap_values[0], features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
-        # shap.summary_plot(shap_values[1], features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
-        shap.summary_plot(shap_values, features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
+            print('<plotter> No x defined. Leaving class function')
+            return
+
+        # Remove non-training features
+        non_feature_columns = ['target', 'key', 'classweight', 'process_ID']
+        filtered_column_headers = [col for col in column_headers if col not in non_feature_columns]
+
+        # Reshape SHAP values if needed
+        if len(shap_values.shape) == 3:
+            shap_values_to_plot = shap_values[:, :, 0]
+        else:
+            shap_values_to_plot = shap_values
+
+        shap.summary_plot(shap_values_to_plot, features=x, feature_names=filtered_column_headers, show=False, max_display=50)
 
         plt.gca().set_title(title)
         plt.tight_layout()
@@ -939,7 +949,7 @@ DY & %s \\ \hline
         if x is None:
             print('<plotter> No x defined. Leaving class function')
             return
-        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False,plot_type='bar',max_display=50)
+        shap.summary_plot(shap_values, features=x, feature_names=column_headers, show=False,plot_type='bar',max_display=50)
         plt.gca().set_title(title)
         plt.tight_layout()
         plt.savefig("{}/plots/{}.png".format(self.output_directory,title), bbox_inches='tight')
@@ -949,7 +959,7 @@ DY & %s \\ \hline
         if x is None:
             print('<plotter> No x defined. Leaving class function')
             return
-        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False,plot_type='bar',max_display=len(column_headers))
+        shap.summary_plot(shap_values, features=x, feature_names=column_headers, show=False,plot_type='bar',max_display=len(column_headers))
         plt.gca().set_title(title)
         plt.tight_layout()
         plt.savefig("{}/plots/{}.png".format(self.output_directory,title), bbox_inches='tight')

@@ -1182,42 +1182,37 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
 
-    # print("="*51)
-    # print("\tSHAP computation: DeepExplainer")
-    # print("="*51)
-    # print(X_test[:100, ].shape)
-    # print(len(column_headers))
-    # print(X_test.shape[1])
-    # # e = shap.DeepExplainer(model, X_train[:400, ])
-    # # shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
-    # # shap_values = e.shap_values(X_test[:400, ])
-    # # print(shap_values[0].shape)
-    # # Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    # # Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    # # Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    print("="*51)
+    print("\tSHAP computation: DeepExplainer")
+    print("="*51)
+    print(X_test[:100, ].shape)
+    print(len(column_headers))
+    print(X_test.shape[1])
 
-    # # print("\tSHAP computation: GradientExplainer")
-    # # e = shap.GradientExplainer(model, X_train[:100, ])
-    # # shap_values = e.shap_values(X_test[:100, ])
-    # # Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
-    # # Plotter.plot_dot_bar(title="GradientExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    # # Plotter.plot_dot_bar_all(title="GradientExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    def predict_proba_1(X):
+        return model.predict(X)[:, 0]
 
-    # def predict_proba_1(X):
-    #     return model.predict(X)[:, 0]
+    num_samples = 50
+    e = shap.KernelExplainer(predict_proba_1, X_train[:num_samples, ])
+    shap_values = e.shap_values(X_test[:num_samples, ])
 
-    # # e = shap.KernelExplainer(model.predict, X_train[:100, ])
-    # e = shap.KernelExplainer(predict_proba_1, X_train[:100, ])
-    # shap_values = e.shap_values(X_test[:100, ])
+    x = X_test[:num_samples, ]  # Replace with the correct variable for features
+    print("Shape of features (x):", x.shape)
 
-    # print("Model output shape on test set:", model.predict(X_test[:100, ]).shape)
-    # print("SHAP values shape (class 0):", shap_values[0].shape)
-    # print("SHAP values shape (class 1):", shap_values[1].shape)
-    # print("Number of shap_values outputs:", len(shap_values))
+    print("Shape of shap_values:", shap_values[0].shape if isinstance(shap_values, list) else shap_values.shape)
+    print("Shape of features (x):", x.shape)
+    print("Feature names:", column_headers)
+    print("Number of features in feature_names:", len(column_headers))
 
-    # Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:100, ],shap_values=shap_values, column_headers=column_headers)
-    # Plotter.plot_dot_bar(title="KernelExplainer_Bar_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
-    # Plotter.plot_dot_bar_all(title="KernelExplainer_bar_All_Var_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
+    print("Model output shape on test set:", model.predict(X_test[:num_samples, ]).shape)
+    print("SHAP values shape (class 0):", shap_values[0].shape)
+    print("SHAP values shape (class 1):", shap_values[1].shape)
+    print("Number of shap_values outputs:", len(shap_values))
+
+
+    Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:num_samples, ], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar(title="KernelExplainer_Bar_sigmoid_y0", x=X_test[:num_samples,], shap_values=shap_values, column_headers=column_headers)
+    Plotter.plot_dot_bar_all(title="KernelExplainer_bar_All_Var_sigmoid_y0", x=X_test[:num_samples,], shap_values=shap_values, column_headers=column_headers)
 
     # Create confusion matrices for training and testing performance
     # Prepare training and testing labels and weights

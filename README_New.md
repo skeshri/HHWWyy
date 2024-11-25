@@ -23,5 +23,9 @@ python train-BinaryDNN_WWvsBB.py -t 1 -i /eos/user/a/avijay/HZZ_mergedrootfiles/
 # Submit the condor jobs
 
 ```bash
+# test
+python prepare_condor_jobs.py --job_name "test_workday" --max_events 1000 --job_flavour "workday" --json "input_variables_test.json"
+
+# final
 python prepare_condor_jobs.py --job_name "Final_25Nov_tomorrow" --max_events -1 --job_flavour "tomorrow"
 ```

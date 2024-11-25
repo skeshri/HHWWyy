@@ -1,7 +1,7 @@
 import os
 import argparse
 
-def create_sh_script(virtual_env, script_name, job_name, project_path, eos_path, input_path, max_events):
+def create_sh_script(virtual_env, script_name, job_name, project_path, eos_path, input_path, max_events, json):
     """
     Creates the .sh file for running the job.
     """
@@ -18,7 +18,7 @@ source {virtual_env}/bin/activate
 
 # Run the training
 name='{job_name}'
-python train-BinaryDNN_WWvsBB.py -t 1 -i {input_path} -s ${{name}} --nEvents {max_events} -l 1
+python train-BinaryDNN_WWvsBB.py -t 1 -i {input_path} -s ${{name}} --nEvents {max_events} -l 1 -j {json}
 
 echo "Training Done"
 
@@ -46,6 +46,7 @@ log                     = train.$(ClusterId).log
 +JobFlavour             = "{job_flavour}"
 when_to_transfer_output = ON_EXIT
 request_GPUs            = {request_gpus}
+request_CPUs = {request_gpus}
 queue
 """
     with open(jdl_name, "w") as jdl_file:
@@ -70,12 +71,15 @@ def main():
     parser.add_argument("--job_flavour", default="workday", help='Job flavour (default: "workday").')
     parser.add_argument("--virtual_env", default=default_virtual_env_name, help=f"Name of the virtual environment (default: {default_virtual_env_name}).")
 
+    parser.add_argument('-j', '--json', dest='json', help='input variable json file', default='input_variables.json', type=str)
+
+
     args = parser.parse_args()
 
     # Create .sh and .jdl files
     sh_script_name = f"train_{args.job_name}.sh"
     jdl_file_name = f"train_{args.job_name}.jdl"
-    create_sh_script(args.virtual_env, sh_script_name, args.job_name, project_path, args.eos_path, args.input_path, args.max_events)
+    create_sh_script(args.virtual_env, sh_script_name, args.job_name, project_path, args.eos_path, args.input_path, args.max_events, args.json)
     create_jdl_file(jdl_file_name, sh_script_name, args.request_gpus, args.job_flavour)
 
     print(f"Prepared {sh_script_name} and {jdl_file_name} for Condor job submission.")
