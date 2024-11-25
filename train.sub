@@ -1,9 +1,0 @@
-executable              = train.sh
-arguments               = $(ClusterId)$(ProcId)
-output                  = train.$(ClusterId).$(ProcId).out
-error                   = train.$(ClusterId).$(ProcId).err
-log                     = train.$(ClusterId).log
-+JobFlavour             = "workday"
-when_to_transfer_output = ON_EXIT
-request_GPUs = 1
-queue

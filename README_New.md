@@ -18,3 +18,10 @@ source xzz2l2nu_env/bin/activate
 ulimit -s unlimited
 python train-BinaryDNN_WWvsBB.py -t 1 -i /eos/user/a/avijay/HZZ_mergedrootfiles/
 ```
+
+
+# Submit the condor jobs
+
+```bash
+python prepare_condor_jobs.py --job_name "test_25novV1"
+```

@@ -39,3 +39,5 @@ xzz2l2nu_env/
 *.log
 *.stdout
 *.out
+*.jdl
+*.sh
