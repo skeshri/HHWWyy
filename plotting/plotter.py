@@ -144,13 +144,13 @@ class plotter(object):
         y_predicted = pandas.Series(y_predicted, name='prediction')
         EventWeights_ = pandas.Series(EventWeights_, name='eventweights')
         if norm == 'index':
-            self.matrix = pandas.crosstab(y_true,y_predicted,EventWeights_,aggfunc=sum,normalize='index')
+            self.matrix = pandas.crosstab(y_true, y_predicted, EventWeights_, aggfunc="sum", normalize='index')
             vmax = 1
         elif norm == 'columns':
-            self.matrix = pandas.crosstab(y_true,y_predicted,EventWeights_,aggfunc=sum,normalize='columns')
+            self.matrix = pandas.crosstab(y_true, y_predicted, EventWeights_, aggfunc="sum", normalize='columns')
             vmax = 1
         else:
-            self.matrix = pandas.crosstab(y_true,y_predicted,EventWeights_,aggfunc=sum)
+            self.matrix = pandas.crosstab(y_true, y_predicted, EventWeights_, aggfunc="sum")
             vmax = 150
 
         self.labelsx = self.matrix.columns
@@ -162,10 +162,8 @@ class plotter(object):
         sns.set(font_scale=2.4)
         sns.heatmap(self.matrix, **opts)
         label_dict = {
-            0 : 'HH',
-            1 : 'yyjets',
-            2 : 'GJets',
-            3 : 'DY'
+            0 : 'background',
+            1 : 'signal'
         }
         for ax in (self.ax1,):
             #Shift tick location to bin centre
@@ -473,7 +471,8 @@ class plotter(object):
         return separations_forTable
 
 
-    def draw_binary_overfitting_plot(self, y_scores_train, y_scores_test, plot_info, test_weights):
+    # def draw_binary_overfitting_plot(self, y_scores_train, y_scores_test, plot_info, test_weights):
+    def draw_binary_overfitting_plot(self, y_scores_train, y_scores_test, plot_info):
         colours = plot_info[0]
         data_type = plot_info[1]
         plots_dir = plot_info[2]
@@ -881,7 +880,8 @@ DY & %s \\ \hline
 
         return
 
-    def binary_overfitting(self, estimator, Y_train, Y_test, result_probs, result_probs_test, plots_dir, train_weights, test_weights, nbins=50):
+    # def binary_overfitting(self, estimator, Y_train, Y_test, result_probs, result_probs_test, plots_dir, train_weights, test_weights, nbins=50):
+    def binary_overfitting(self, estimator, Y_train, Y_test, result_probs, result_probs_test, plots_dir, nbins=50):
 
         model = estimator
         data_type = type(model)
@@ -892,13 +892,13 @@ DY & %s \\ \hline
         y_scores_test_signal_sample = []
         y_scores_test_bckg_sample = []
         for i in range(0,len(result_probs)-1):
-            train_event_weight = train_weights[i]
+            # train_event_weight = train_weights[i]
             if Y_train[i] == 1:
                 y_scores_train_signal_sample.append(result_probs[i])
             if Y_train[i] == 0:
                 y_scores_train_bckg_sample.append(result_probs[i])
         for i in range(0,len(result_probs_test)-1):
-            test_event_weight = test_weights[i]
+            # test_event_weight = test_weights[i]
             if Y_test[i] == 1:
                 y_scores_test_signal_sample.append(result_probs_test[i])
             if Y_test[i] == 0:
@@ -916,7 +916,8 @@ DY & %s \\ \hline
             colours = ['r','steelblue']
             plot_title = 'Binary'
             plot_info = [colours,data_type,plots_dir,plot_title]
-            separations_all.append(self.draw_binary_overfitting_plot(y_scores_train_nonCat,y_scores_test_nonCat,plot_info,test_weights))
+            # separations_all.append(self.draw_binary_overfitting_plot(y_scores_train_nonCat,y_scores_test_nonCat,plot_info,test_weights))
+            separations_all.append(self.draw_binary_overfitting_plot(y_scores_train_nonCat,y_scores_test_nonCat,plot_info))
             counter = counter+1
 
         return
@@ -925,7 +926,10 @@ DY & %s \\ \hline
         if x is None:
           print('<plotter> No x defined. Leaving class function')
           return
-        shap.summary_plot(shap_values[0], features=x, feature_names=column_headers, show=False, max_display=50)
+        # shap.summary_plot(shap_values[0], features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
+        # shap.summary_plot(shap_values[1], features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
+        shap.summary_plot(shap_values, features=x[:100, ], feature_names=column_headers, show=False, max_display=50)
+
         plt.gca().set_title(title)
         plt.tight_layout()
         plt.savefig("{}/plots/{}.png".format(self.output_directory, title), bbox_inches='tight')
