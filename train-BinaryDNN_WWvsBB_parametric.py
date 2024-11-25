@@ -17,6 +17,7 @@ import seaborn as sns
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Activation, Input
 from tensorflow.keras.callbacks import EarlyStopping, CSVLogger, LearningRateScheduler
+from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.optimizers import Nadam
 import uproot
 from plotting.plotter import plotter
@@ -41,6 +42,76 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 np.random.seed(7)
 
 CURRENT_DATETIME = datetime.now()
+
+class PerMassMetricsCallback(Callback):
+    def __init__(self, model_reference, X_val, Y_val, masses, output_dir):
+        """
+        Callback to compute accuracy and loss for each mass point during training.
+
+        :param model_reference: Reference to the model being trained.
+        :param X_val: Validation data features (including mass as a feature).
+        :param Y_val: Validation data labels (one-hot encoded).
+        :param masses: List of unique mass points.
+        :param output_dir: Directory to save plots.
+        """
+        super().__init__()
+        self.model_reference = model_reference  # Store the model using a different attribute name
+        self.X_val = X_val
+        self.Y_val = Y_val
+        self.masses = masses
+        self.output_dir = output_dir
+        self.history = {mass: {'accuracy': [], 'loss': []} for mass in masses}
+
+    def on_epoch_end(self, epoch, logs=None):
+        print(f"\nEvaluating per mass metrics after epoch {epoch + 1}...")
+        for mass in self.masses:
+            # Filter validation data by mass
+            mass_filter = self.X_val[:, -1] == mass
+            X_mass = self.X_val[mass_filter]
+            Y_mass = self.Y_val[mass_filter]
+
+            if len(X_mass) == 0:
+                continue  # Skip if no data for this mass
+
+            # Compute loss and accuracy for this mass
+            metrics = self.model.evaluate(X_mass, Y_mass, verbose=0)
+            self.history[mass]['loss'].append(metrics[0])
+            self.history[mass]['accuracy'].append(metrics[1])
+
+    def plot_metrics(self):
+        """
+        Generate and save accuracy vs. epoch and loss vs. epoch plots for each mass.
+        """
+        for mass in self.masses:
+            if len(self.history[mass]['accuracy']) == 0:
+                continue  # Skip if no data for this mass
+
+            # Plot accuracy
+            plt.figure(figsize=(8, 6))
+            plt.plot(self.history[mass]['accuracy'], label=f"Mass {mass}")
+            plt.xlabel("Epoch")
+            plt.ylabel("Accuracy")
+            plt.title(f"Accuracy vs. Epoch for Mass {mass}")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            plt.savefig(f"{self.output_dir}/accuracy_vs_epoch_mass_{mass}.png")
+            plt.close()
+
+            # Plot loss
+            plt.figure(figsize=(8, 6))
+            plt.plot(self.history[mass]['loss'], label=f"Mass {mass}")
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss")
+            plt.title(f"Loss vs. Epoch for Mass {mass}")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            plt.savefig(f"{self.output_dir}/loss_vs_epoch_mass_{mass}.png")
+            plt.close()
+
+            print(f"Saved accuracy and loss plots for mass {mass}")
+
 
 # Ensure directory exists
 def ensure_directory_exists(directory):
@@ -196,6 +267,40 @@ def train_model(model, X_train, Y_train, X_val, Y_val, batch_size, epochs, outpu
     )
     return history
 
+def train_model_with_mass_metrics(model, X_train, Y_train, X_val, Y_val, batch_size, epochs, output_dir, class_weight=None):
+    """
+    Train the model with accuracy and loss tracking for each mass point.
+
+    :param model: The model to train.
+    :param X_train: Training feature set (including the mass feature).
+    :param Y_train: Training labels (one-hot encoded).
+    :param X_val: Validation feature set (including the mass feature).
+    :param Y_val: Validation labels (one-hot encoded).
+    :param batch_size: Batch size for training.
+    :param epochs: Number of epochs to train.
+    :param output_dir: Directory to save plots and metrics.
+    :param class_weight: Optional class weights for imbalanced data.
+    :return: Training history and per mass metrics callback.
+    """
+    masses = np.unique(X_val[:, -1])
+    per_mass_callback = PerMassMetricsCallback(model, X_val, Y_val, masses, output_dir)
+
+    # Train the model
+    history = model.fit(
+        X_train, Y_train,
+        validation_data=(X_val, Y_val),
+        batch_size=batch_size,
+        epochs=epochs,
+        callbacks=[per_mass_callback],
+        class_weight=class_weight,
+        verbose=1
+    )
+
+    # Generate plots for per mass metrics
+    per_mass_callback.plot_metrics()
+
+    return history, per_mass_callback
+
 # Plot confusion matrix
 def plot_confusion_matrix(y_true, y_pred, output_path, labels, title="Confusion Matrix"):
     cm = confusion_matrix(y_true, y_pred)
@@ -249,14 +354,25 @@ def main():
     print(data.head())
     print(data['mass'].unique())
 
-    X = data[variables].values
+    # Define feature columns explicitly (these are the features used for training)
+    feature_columns = [col for col in variables if col not in ['target', 'process_ID', 'classweight', 'mass']]
+
+    # add mass to the feature columns
+    feature_columns.append('mass')
+
+    print(f"Feature columns: {feature_columns}")
+
+    # Extract only the features used for training
+    X = data[feature_columns].values
     Y = pd.get_dummies(data['target']).values  # One-hot encoding for multi-class
 
     # Split into train and validation sets
     X_train, X_val, Y_train, Y_val = train_test_split(X, Y, test_size=0.1, random_state=7)
 
-    # print X_val[:, -1]
-    print(X_val[:, -1])
+    # Debugging: Ensure 'mass' is in X
+    print("X_train shape:", X_train.shape)
+    print("X_val shape:", X_val.shape)
+    print("Mass in validation data (last column of X_val):", X_val[:, -1])
 
     # Preprocess training and validation data
     X_train = preprocess_data(pd.DataFrame(X_train)).values
@@ -276,12 +392,20 @@ def main():
         # Build model
         model = build_model(input_dim=X_train.shape[1], learn_rate=args.learn_rate)
 
-        # Train model
-        history = train_model(
+        # # Train model
+        # history = train_model(
+        #     model, X_train, Y_train, X_val, Y_val,
+        #     batch_size=args.batch_size,
+        #     epochs=args.epochs,
+        #     output_dir=args.output_dir
+        # )
+
+        # Train model with per mass metrics
+        history, per_mass_callback = train_model_with_mass_metrics(
             model, X_train, Y_train, X_val, Y_val,
             batch_size=args.batch_size,
             epochs=args.epochs,
-            output_dir=args.output_dir
+            output_dir=plots_dir
         )
 
         # Evaluate and save model
@@ -291,32 +415,40 @@ def main():
     for mass in signal_masses:
         print(f"Generating validation plfots for mass: {mass}")
 
-        # X_val[:, -1]
-        print(X_val[:, -1])
-
         # Filter data by mass
-        mass_filter = X_val[:, -1] == mass
+        mass_filter = X_val[:, -1] == mass  # The last column is the 'mass'
         X_val_mass = X_val[mass_filter]
+
+
+        print(f"len(feature_columns) = {len(feature_columns)}")
+        # Extract only the features used for training
+        X_val_mass_features = X_val_mass[:, :len(feature_columns)]  # Use only the first N columns corresponding to feature_columns
         Y_val_mass = Y_val[mass_filter]
 
         if len(X_val_mass) == 0:
             print(f"No validation data found for mass: {mass}")
             continue
 
+        # print feature_columns
+        print(f"Feature columns: {feature_columns}")
+
+        # 	2.	Validate X_train.shape and X_val_mass_features.shape to ensure they match input_dim=14.
+        print("X_train shape:", X_train.shape)
+        print("X_val_mass_features shape:", X_val_mass_features.shape)
+
         # Evaluate model
-        y_pred_mass = np.argmax(model.predict(X_val_mass), axis=1)
+        y_pred_mass = np.argmax(model.predict(X_val_mass_features), axis=1)  # Exclude 'mass' from prediction input
         y_true_mass = np.argmax(Y_val_mass, axis=1)
-        y_score_mass = model.predict(X_val_mass)
+        y_score_mass = model.predict(X_val_mass_features)
 
         # ROC Curve
-        plot_roc_curve_multiclass(Y_val_mass, y_score_mass, plots_dir, labels=["ggH", "VBF", "Background"], suffix=f"_{mass}")
+        plot_roc_curve_multiclass(Y_val_mass, y_score_mass, plots_dir, labels=["ggH", "VBF", "Background"], mass=mass)
 
         # Confusion Matrix
-        plot_confusion_matrix_multiclass(Y_val_mass, y_pred_mass, plots_dir, labels=["ggH", "VBF", "Background"], suffix=f"_{mass}")
+        plot_confusion_matrix_multiclass(Y_val_mass, y_pred_mass, plots_dir, labels=["ggH", "VBF", "Background"], mass=mass)
 
-        # Classifier Output
-        plot_classifier_output(model, X_train, Y_train, X_val_mass, Y_val_mass, output_dir=plots_dir, suffix=f"_{mass}")
-
+        # Classification Report
+        plot_classifier_output(model, X_train, Y_train, X_val_mass_features, Y_val_mass, output_dir=plots_dir, mass=mass)
 
 if __name__ == "__main__":
     main()

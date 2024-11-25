@@ -51,14 +51,15 @@ def plot_metrics(history, output_dir):
     plt.savefig(os.path.join(output_dir, "all_metrics.png"))
 
 
-def plot_confusion_matrix_multiclass(y_true, y_pred, output_dir, labels):
+def plot_confusion_matrix_multiclass(y_true, y_pred, output_dir, labels, mass = None):
     """
-    Plot a confusion matrix for multiclass classification.
+    Plot a confusion matrix for multi-class classification or pMulti-class classification.
 
     :param y_true: Ground truth labels (integers).
     :param y_pred: Predicted labels (integers).
     :param output_dir: Directory to save the plot.
     :param labels: List of class labels.
+    :param mass: Mass value for the plot, used in file naming.
     """
     # Convert one-hot to integers if needed
     if y_true.ndim > 1:
@@ -70,35 +71,55 @@ def plot_confusion_matrix_multiclass(y_true, y_pred, output_dir, labels):
 
     plt.figure(figsize=(8, 8))
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels)
-    plt.title("Confusion Matrix")
+    if mass is not None:
+        plt.title(f"Confusion Matrix for Mass {mass}")
+    else:
+        plt.title(f"Confusion Matrix")
     plt.xlabel("Predicted Label")
     plt.ylabel("True Label")
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "confusion_matrix_multiclass.png")
+
+    if mass is not None:
+        output_path = os.path.join(output_dir, f"confusion_matrix_mass_{mass}.png")
+    else:
+        output_path = os.path.join(output_dir, "confusion_matrix_multiclass.png")
     plt.savefig(output_path)
     print(f"Saved confusion matrix to: {output_path}")
     plt.close()
 
 
-def plot_roc_curve_multiclass(y_true, y_score, output_dir, labels):
+def plot_roc_curve_multiclass(y_true, y_score, output_dir, labels, mass = None):
     y_true_binarized = label_binarize(y_true, classes=range(len(labels)))
     plt.figure(figsize=(8, 6))
+
+    # For each class, compute the ROC curve and AUC
     for i, label in enumerate(labels):
         fpr, tpr, _ = roc_curve(y_true_binarized[:, i], y_score[:, i])
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, label=f"Class {label} (AUC = {roc_auc:.2f})")
-    plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
-    plt.title('ROC Curve')
+        plt.plot(fpr, tpr, lw=2, label=f"Class {label} (AUC = {roc_auc:.2f})")
+
+    # Plot diagonal line
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--',  lw=2)
+
+    # Formatting the plot
+    if mass is not None:
+        plt.title(f"ROC Curve for Mass {mass}")
+    else:
+        plt.title("ROC Curve")
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend(loc="lower right")
+    plt.grid(True)
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "ROC.png"))
 
-
-import shap
-import matplotlib.pyplot as plt
-import os
+    # Save the plot
+    if mass is not None:
+        plot_path = os.path.join(output_dir, f"roc_curve_mass_{mass}.png")
+    else:
+        plot_path = os.path.join(output_dir, "roc_curve_multiclass.png")
+    plt.savefig(plot_path)
+    plt.close()
+    print(f"ROC curve saved  to: {plot_path}")
 
 def plot_shap_values(model, X_sample, feature_columns, output_dir):
     """
@@ -260,17 +281,31 @@ def plot_overfitting_multiclass(model, X_train, Y_train, X_test, Y_test, class_l
     print(f"Overfitting plots saved to {output_dir}")
 
 
-def plot_classifier_output(model, X_train, Y_train, X_test, Y_test, output_dir):
+def plot_classifier_output(model, X_train, Y_train, X_test, Y_test, output_dir, mass=None):
     """
-    Plot the classifier output for ggH vs Background and VBF vs Background.
+    Plot the classifier output for ggH vs Background and VBF vs Background for a specific mass.
 
     :param model: Trained model.
-    :param X_train: Training feature set.
+    :param X_train: Training feature set (including the mass feature).
     :param Y_train: Training labels (one-hot encoded or categorical).
-    :param X_test: Testing feature set.
+    :param X_test: Testing feature set (including the mass feature).
     :param Y_test: Testing labels (one-hot encoded or categorical).
     :param output_dir: Directory to save plots.
+    :param mass: Mass value for the plot, used in file naming and filtering.
     """
+    # Filter by mass if specified
+    if mass is not None:
+        train_mass_filter = X_train[:, -1] == mass  # Assume 'mass' is the last column
+        test_mass_filter = X_test[:, -1] == mass
+        X_train = X_train[train_mass_filter]
+        Y_train = Y_train[train_mass_filter]
+        X_test = X_test[test_mass_filter]
+        Y_test = Y_test[test_mass_filter]
+
+        if len(X_test) == 0 or len(X_train) == 0:
+            print(f"No data found for mass: {mass}. Skipping plot generation.")
+            return
+
     # Predict probabilities for train and test sets
     train_probs = model.predict(X_train)
     test_probs = model.predict(X_test)
@@ -308,13 +343,17 @@ def plot_classifier_output(model, X_train, Y_train, X_test, Y_test, output_dir):
 
         plt.xlabel("Classifier Output")
         plt.ylabel("(1/N) dN/dX")
-        plt.title(f"Classifier Output: {plot_title}")
+        mass_label = f" (Mass: {mass})" if mass is not None else ""
+        plt.title(f"Classifier Output: {plot_title}{mass_label}")
         plt.legend()
         plt.grid()
         plt.tight_layout()
 
         # Save the plot
-        plot_filename = f"{output_dir}/classifier_output_{plot_title.replace(' ', '_').lower()}.png"
+        plot_filename = f"{output_dir}/classifier_output_{plot_title.replace(' ', '_').lower()}"
+        if mass is not None:
+            plot_filename += f"_mass_{mass}"
+        plot_filename += ".png"
         plt.savefig(plot_filename)
         plt.close()
 

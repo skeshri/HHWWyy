@@ -35,4 +35,7 @@ python prepare_condor_jobs.py --job_name "Final_25Nov_tomorrow_MoreVariables" --
 
 ```bash
 python train-BinaryDNN_WWvsBB_NEW.py --inputPath /eos/user/a/avijay/HZZ_mergedrootfiles/ --output_dir /eos/user/r/rasharma/HZZ2l2nu/  --num_events 1000 --job_name DNN_test
+python train-BinaryDNN_WWvsBB_parametric.py --inputPath /eos/user/a/avijay/HZZ_mergedrootfiles/ --output_dir /eos/user/r/rasharma/HZZ2l2nu/  --num_events 1000 --job_name DNN_test_parametric
+
+python train-BinaryDNN_WWvsBB_parametric.py --inputPath /eos/user/a/avijay/HZZ_mergedrootfiles/ --output_dir /eos/user/r/rasharma/HZZ2l2nu/  --num_events 1000 --job_name DNN_test_parametric --json input_variables_test.json
 ```
