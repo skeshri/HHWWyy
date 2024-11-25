@@ -29,3 +29,10 @@ python prepare_condor_jobs.py --job_name "test_workday" --max_events 1000 --job_
 # final
 python prepare_condor_jobs.py --job_name "Final_25Nov_tomorrow" --max_events -1 --job_flavour "tomorrow"
 ```
+
+
+# New script
+
+```bash
+python train-BinaryDNN_WWvsBB_NEW.py --inputPath /eos/user/a/avijay/HZZ_mergedrootfiles/ --output_dir /eos/user/r/rasharma/HZZ2l2nu/
+```
