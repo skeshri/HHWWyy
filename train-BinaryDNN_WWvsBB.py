@@ -26,6 +26,7 @@ import pandas as pd
 import optparse, json, argparse, math
 from os import environ
 import ROOT
+import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import cross_val_score
@@ -107,7 +108,7 @@ def load_data_from_EOS(self, directory, mask='', prepend='root://eosuser.cern.ch
     #out = commands.getoutput(eos_cmd)
     return
 
-def load_data(inputPath,variables,criteria):
+def load_data(inputPath,variables,criteria, num_events):
     """
     Load data from .root file into a pandas dataframe and return it.
 
@@ -161,8 +162,7 @@ def load_data(inputPath,variables,criteria):
                         # Create dataframe for ttree
                         tree = tfile["Events"]
                         # This dataframe will be a chunk of the final total dataframe used in training
-                        chunk_df = tree.arrays(my_cols_list[:-4],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
-                        # chunk_df = tree.arrays(my_cols_list[:-4],library='pd')
+                        chunk_df = tree.arrays(my_cols_list[:-4],library='pd', entry_stop=num_events)
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
                         chunk_df['target']=target
@@ -184,8 +184,7 @@ def load_data(inputPath,variables,criteria):
                         # Create dataframe for ttree
                         tree = tfile["Events"]
                         # This dataframe will be a chunk of the final total dataframe used in training
-                        chunk_df = tree.arrays(my_cols_list[:-4],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
-                        # chunk_df = tree.arrays(my_cols_list[:-4],library='pd')
+                        chunk_df = tree.arrays(my_cols_list[:-4],library='pd', entry_stop=num_events)
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
                         chunk_df['target']=target
@@ -614,6 +613,7 @@ def main():
     parent_parser.add_argument('-t', '--train_model', dest='train_model', help='Option to train model or simply make diagnostic plots (0=False, 1=True)', default=True, type=bool)
     parent_parser.add_argument('-s', '--suff', dest='suffix', help='Option to choose suffix for training', default='TEST', type=str)
     parent_parser.add_argument('-i', '--inputs_file_path', dest='inputs_file_path', help='Path to directory containing directories \'Bkgs\' and \'Signal\' which contain background and signal ntuples respectively.', default='', type=str)
+    parent_parser.add_argument('--nEvents', dest='nEvents', help='Number of events to read from the input file. User -1 for all events', default=1000, type=int)
     parent_parser.add_argument('-w', '--weights', dest='weights', help='weights to use', default='BalanceYields', type=str,choices=['BalanceYields','BalanceNonWeighted'])
     parent_parser.add_argument('-cw', '--classweight', dest='classweight', help='classweight to use', default=False, type=bool)
     parent_parser.add_argument('-sw', '--sampleweight', dest='sampleweight', help='sampleweight to use', default=False, type=bool)
@@ -779,7 +779,7 @@ def main():
         data = pandas.read_csv(outputdataframe_name)
     else:
         print('<train-DNN> Creating new data .csv @: %s . . . . ' % (inputs_file_path))
-        data = load_data(inputs_file_path,column_headers,selection_criteria)
+        data = load_data(inputs_file_path,column_headers,selection_criteria, args.nEvents)
         # Change sentinal value to speed up training.
         # data = data.mask(data<-25., -9.)
         # data[data<-25] = -9.0
@@ -827,82 +827,6 @@ def main():
 
     print('<train-DNN> Training dataset shape: ', traindataset.shape)
     print('<train-DNN> Validation dataset shape: ', valdataset.shape)
-
-    # Event weights
-    #weights_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'weight']
-    #weights_for_HH_NLO = traindataset.loc[traindataset['process_ID']=='HH', 'weight_NLO_SM']
-    #weights_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'weight']
-    #weights_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'weight']
-    #weights_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'weight']
-    #weights_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'weight']
-    #weights_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'weight']
-
-    #HHsum_weighted= sum(weights_for_HH)
-    #Hggsum_weighted= sum(weights_for_Hgg)
-    #DiPhotonsum_weighted= sum(weights_for_DiPhoton)
-    #QCDsum_weighted= sum(weights_for_QCD)
-    #TTGsJetssum_weighted= sum(weights_for_TTGsJets)
-    #bbggsum_weighted= sum(weights_for_bbgg)
-    #bckgsum_weighted = Hggsum_weighted + DiPhotonsum_weighted +  QCDsum_weighted + TTGsJetssum_weighted + bbggsum_weighted
-
-    #nevents_for_HH = traindataset.loc[traindataset['process_ID']=='HH', 'unweighted']
-    #nevents_for_Hgg = traindataset.loc[traindataset['process_ID']=='Hgg', 'unweighted']
-    #nevents_for_DiPhoton = traindataset.loc[traindataset['process_ID']=='DiPhoton', 'unweighted']
-    #nevents_for_QCD = traindataset.loc[traindataset['process_ID']=='QCD', 'unweighted']
-    #nevents_for_TTGsJets = traindataset.loc[traindataset['process_ID']=='TTGsJets', 'unweighted']
-    #nevents_for_bbgg = traindataset.loc[traindataset['process_ID']=='bbgg', 'unweighted']
-
-    #HHsum_unweighted= sum(nevents_for_HH)
-    #Hggsum_unweighted= sum(nevents_for_Hgg)
-    #DiPhotonsum_unweighted= sum(nevents_for_DiPhoton)
-    #QCDsum_unweighted= sum(nevents_for_QCD)
-    #TTGsJetssum_unweighted= sum(nevents_for_TTGsJets)
-    #bbggsum_unweighted= sum(nevents_for_bbgg)
-    #bckgsum_unweighted = Hggsum_unweighted + DiPhotonsum_unweighted + QCDsum_unweighted + TTGsJetssum_unweighted + bbggsum_unweighted
-
-    # HHsum_weighted = 2*HHsum_weighted
-    # HHsum_unweighted = 2*HHsum_unweighted
-    '''
-    if weights=='BalanceYields':
-        print('#---------------------------------------')
-        print('#    BalanceYields: Print weight       #')
-        print('#---------------------------------------')
-        print('{0:22} = {1:11}'.format('HHsum_weighted' , HHsum_weighted))
-        print('{0:22} = {1:11}'.format('Hggsum_weighted' , Hggsum_weighted))
-        print('{0:22} = {1:11}'.format('DiPhotonsum_weighted', DiPhotonsum_weighted))
-        print('{0:22} = {1:11}'.format('QCDsum_weighted', QCDsum_weighted))
-        print('{0:22} = {1:11}'.format('TTGsJetssum_weighted', TTGsJetssum_weighted))
-        print('{0:22} = {1:11}'.format('bbggsum_weighted ',bbggsum_weighted))
-        print('{0:22} = {1:11}'.format('bckgsum_weighted', bckgsum_weighted))
-        print('New classweight: (HHsum_unweighted/HHsum_weighted) = ',(HHsum_unweighted/HHsum_weighted))
-        print('#---------------------------------------')
-        traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = HHsum_unweighted/HHsum_weighted
-        traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-        traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_weighted)
-
-    if weights=='BalanceNonWeighted':
-        print('#---------------------------------------')
-        print('#    BalanceNonWeighted: Print weight  #')
-        print('#---------------------------------------')
-        print('HHsum_unweighted= ' , HHsum_unweighted)
-        print('Hggsum_unweighted= ' , Hggsum_unweighted)
-        print('DiPhotonsum_unweighted= ', DiPhotonsum_unweighted)
-        print('QCDsum_unweighted= ', QCDsum_unweighted)
-        print('TTGsJetssum_unweighted= ', TTGsJetssum_unweighted)
-        print('bbggsum_unweighted = ', bbggsum_unweighted)
-        print('bckgsum_unweighted= ', bckgsum_unweighted)
-        print('#---------------------------------------')
-
-        traindataset.loc[traindataset['process_ID']=='HH', ['classweight']] = 1.
-        traindataset.loc[traindataset['process_ID']=='Hgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='DiPhoton', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='QCD', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='TTGsJets', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-        traindataset.loc[traindataset['process_ID']=='bbgg', ['classweight']] = (HHsum_unweighted/bckgsum_unweighted)
-    '''
-    # exit()
 
     # Remove column headers that aren't input variables
     # Remove column headers that aren't input variables
@@ -1155,52 +1079,60 @@ def main():
     # result_classes_test = np.argmax(model.predict(np.array(X_test)), axis=-1)
     result_classes_test = np.argmax(result_probs_test, axis=1)
 
-    y_pred = model.predict(X_test)
-    y_pred = np.argmax(y_pred, axis=-1)
-    y_test = np.argmax(Y_test, axis=-1)
-    # cm = confusion_matrix(y_test, y_pred)
+    # Convert probabilities to binary predictions
+    y_pred = (model.predict(X_test) > 0.5).astype("int32").flatten()  # Flatten ensures it is 1D
+
+    # Ensure Y_test is also 1D and binary
+    if len(Y_test.shape) > 1 and Y_test.shape[1] > 1:
+        y_test = np.argmax(Y_test, axis=1)  # Use argmax if one-hot encoded
+    else:
+        y_test = Y_test.flatten()  # Use directly if already binary
+
+    # Compute confusion matrix
+    from sklearn.metrics import confusion_matrix
+    cm = confusion_matrix(y_test, y_pred)
+
     print("Confusion matrix:")
+    print(cm)
     print("=================")
-    # print(cm)
+
+    plt.figure(figsize=(5,5))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
+    # plt.title('Confusion matrix @{:.2f}'.format(p))
+    plt.title('Confusion matrix')
+    plt.xlabel("Predicted Label")
+    plt.ylabel("True Label")
+    plt.tight_layout()
+    plt.savefig(plots_dir + "/confusion_matrix.png")
+
+    print("=================")
+    print("f1_score")
+    print("f1 score (binary)     : {}".format(f1_score(y_test, y_pred,average='binary')))
+    print("f1 score (micro)     : {}".format(f1_score(y_test, y_pred,average='micro')))
+    print("f1 score (macro)     : {}".format(f1_score(y_test, y_pred,average='macro')))
+    print("f1 score (weighted)  : {}".format(f1_score(y_test, y_pred,average='weighted')))
     print("=================")
 
-    # plt.figure(figsize=(5,5))
-    # sns.heatmap(cm, annot=True, fmt="d")
-    # # plt.title('Confusion matrix @{:.2f}'.format(p))
-    # plt.title('Confusion matrix')
-    # plt.ylabel('Actual label')
-    # plt.xlabel('Predicted label')
-    # plt.tight_layout()
-    # plt.savefig(plots_dir + "/confusion_matrix.png")
-
-    # print("=================")
-    # print("f1_score")
-    # print("f1 score (binary)     : {}".format(f1_score(y_test, y_pred,average='binary')))
-    # print("f1 score (micro)     : {}".format(f1_score(y_test, y_pred,average='micro')))
-    # print("f1 score (macro)     : {}".format(f1_score(y_test, y_pred,average='macro')))
-    # print("f1 score (weighted)  : {}".format(f1_score(y_test, y_pred,average='weighted')))
-    # print("=================")
-
-    # print("f1_score")
-    # print("f1 score (binary, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='binary')))
-    # print("f1 score (micro, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='micro')))
-    # print("f1 score (macro, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='macro')))
-    # print("f1 score (weighted, labels=0,1)  : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='weighted')))
-    # print("=================")
+    print("f1_score")
+    print("f1 score (binary, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='binary')))
+    print("f1 score (micro, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='micro')))
+    print("f1 score (macro, labels=0,1)     : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='macro')))
+    print("f1 score (weighted, labels=0,1)  : {}".format(f1_score(y_test, y_pred,labels=[0,1],average='weighted')))
+    print("=================")
 
 
-    # print("f1_score")
-    # print("f1 score (binary, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='binary')))
-    # print("f1 score (micro, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='micro')))
-    # print("f1 score (macro, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='macro')))
-    # print("f1 score (weighted, labels=0)  : {}".format(f1_score(y_test, y_pred,labels=[0],average='weighted')))
-    # print("=================")
+    print("f1_score")
+    print("f1 score (binary, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='binary')))
+    print("f1 score (micro, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='micro')))
+    print("f1 score (macro, labels=0)     : {}".format(f1_score(y_test, y_pred,labels=[0],average='macro')))
+    print("f1 score (weighted, labels=0)  : {}".format(f1_score(y_test, y_pred,labels=[0],average='weighted')))
+    print("=================")
 
-    # print("f1_score")
-    # print("f1 score (binary, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='binary')))
-    # print("f1 score (micro, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='micro')))
-    # print("f1 score (macro, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='macro')))
-    # print("f1 score (weighted, labels=1)  : {}".format(f1_score(y_test, y_pred,labels=[1],average='weighted')))
+    print("f1_score")
+    print("f1 score (binary, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='binary')))
+    print("f1 score (micro, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='micro')))
+    print("f1 score (macro, labels=1)     : {}".format(f1_score(y_test, y_pred,labels=[1],average='macro')))
+    print("f1 score (weighted, labels=1)  : {}".format(f1_score(y_test, y_pred,labels=[1],average='weighted')))
 
     print("=================")
 
@@ -1250,57 +1182,68 @@ def main():
     Plotter.save_plots(dir=plots_dir, filename='ROC.pdf')
 
 
-    print("="*51)
-    print("\tSHAP computation: DeepExplainer")
-    print("="*51)
-    print(X_test[:100, ].shape)
-    print(len(column_headers))
-    print(X_test.shape[1])
-    # e = shap.DeepExplainer(model, X_train[:400, ])
-    # shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
-    # shap_values = e.shap_values(X_test[:400, ])
-    # print(shap_values[0].shape)
-    # Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
-    # Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    # Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # print("="*51)
+    # print("\tSHAP computation: DeepExplainer")
+    # print("="*51)
+    # print(X_test[:100, ].shape)
+    # print(len(column_headers))
+    # print(X_test.shape[1])
+    # # e = shap.DeepExplainer(model, X_train[:400, ])
+    # # shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
+    # # shap_values = e.shap_values(X_test[:400, ])
+    # # print(shap_values[0].shape)
+    # # Plotter.plot_dot(title="DeepExplainer_sigmoid_y0", x=X_test[:400, ], shap_values=shap_values, column_headers=column_headers)
+    # # Plotter.plot_dot_bar(title="DeepExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # # Plotter.plot_dot_bar_all(title="DeepExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
-    # print("\tSHAP computation: GradientExplainer")
-    # e = shap.GradientExplainer(model, X_train[:100, ])
+    # # print("\tSHAP computation: GradientExplainer")
+    # # e = shap.GradientExplainer(model, X_train[:100, ])
+    # # shap_values = e.shap_values(X_test[:100, ])
+    # # Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
+    # # Plotter.plot_dot_bar(title="GradientExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+    # # Plotter.plot_dot_bar_all(title="GradientExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
+
+    # def predict_proba_1(X):
+    #     return model.predict(X)[:, 0]
+
+    # # e = shap.KernelExplainer(model.predict, X_train[:100, ])
+    # e = shap.KernelExplainer(predict_proba_1, X_train[:100, ])
     # shap_values = e.shap_values(X_test[:100, ])
-    # Plotter.plot_dot(title="GradientExplainer_sigmoid_y0", x=X_test[:100, ], shap_values=shap_values, column_headers=column_headers)
-    # Plotter.plot_dot_bar(title="GradientExplainer_Bar_sigmoid_y0", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
-    # Plotter.plot_dot_bar_all(title="GradientExplainer_Bar_sigmoid_y0_all", x=X_test[:400,], shap_values=shap_values, column_headers=column_headers)
 
-    def predict_proba_1(X):
-        return model.predict(X)[:, 0]
+    # print("Model output shape on test set:", model.predict(X_test[:100, ]).shape)
+    # print("SHAP values shape (class 0):", shap_values[0].shape)
+    # print("SHAP values shape (class 1):", shap_values[1].shape)
+    # print("Number of shap_values outputs:", len(shap_values))
 
-    # e = shap.KernelExplainer(model.predict, X_train[:100, ])
-    e = shap.KernelExplainer(predict_proba_1, X_train[:100, ])
-    shap_values = e.shap_values(X_test[:100, ])
-
-    print("Model output shape on test set:", model.predict(X_test[:100, ]).shape)
-    print("SHAP values shape (class 0):", shap_values[0].shape)
-    print("SHAP values shape (class 1):", shap_values[1].shape)
-    print("Number of shap_values outputs:", len(shap_values))
-
-    Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:100, ],shap_values=shap_values, column_headers=column_headers)
+    # Plotter.plot_dot(title="KernelExplainer_sigmoid_y0", x=X_test[:100, ],shap_values=shap_values, column_headers=column_headers)
     # Plotter.plot_dot_bar(title="KernelExplainer_Bar_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
     # Plotter.plot_dot_bar_all(title="KernelExplainer_bar_All_Var_sigmoid_y0", x=X_test[:100,], shap_values=shap_values, column_headers=column_headers)
 
-    # # Create confusion matrices for training and testing performance
-    # Plotter.conf_matrix(original_encoded_train_Y,result_classes_train,train_weights,'index')
-    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_confusion_matrix_TRAIN.png')
-    # Plotter.conf_matrix(original_encoded_test_Y,result_classes_test,test_weights,'index')
-    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_confusion_matrix_TEST.png')
+    # Create confusion matrices for training and testing performance
+    # Prepare training and testing labels and weights
+    train_weights = traindataset['classweight'].values  # Use appropriate column for weights
+    test_weights = valdataset['classweight'].values  # Use appropriate column for weights
 
-    # Plotter.conf_matrix(original_encoded_train_Y,result_classes_train,train_weights,'columns')
-    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_columns_confusion_matrix_TRAIN.png')
-    # Plotter.conf_matrix(original_encoded_test_Y,result_classes_test,test_weights,'columns')
-    # Plotter.save_plots(dir=plots_dir, filename='yields_norm_columns_confusion_matrix_TEST.png')
+    # Ensure labels are integers for confusion matrix
+    result_classes_train = np.argmax(result_probs, axis=1)
+    result_classes_test = np.argmax(result_probs_test, axis=1)
 
-    # Plotter.conf_matrix(original_encoded_train_Y,result_classes_train,train_weights,'')
-    # Plotter.save_plots(dir=plots_dir, filename='yields_matrix_TRAIN.png')
-    # Plotter.conf_matrix(original_encoded_test_Y,result_classes_test,test_weights,'')
-    # Plotter.save_plots(dir=plots_dir, filename='yields_matrix_TEST.png')
+    # Plot confusion matrix for training data
+    print("Plotting confusion matrix for training data...")
+    Plotter.conf_matrix(Y_train, result_classes_train, train_weights, norm='index')
+    Plotter.save_plots(dir=plots_dir, filename='confusion_matrix_TRAIN_index.png')
+    Plotter.conf_matrix(Y_train, result_classes_train, train_weights, norm='columns')
+    Plotter.save_plots(dir=plots_dir, filename='confusion_matrix_TRAIN_columns.png')
+    Plotter.conf_matrix(Y_train, result_classes_train, train_weights, norm=None)
+    Plotter.save_plots(dir=plots_dir, filename='confusion_matrix_TRAIN.png')
+
+    # Plot confusion matrix for testing data
+    print("Plotting confusion matrix for testing data...")
+    Plotter.conf_matrix(Y_test, result_classes_test, test_weights, norm='index')
+    Plotter.save_plots(dir=plots_dir, filename='confusion_matrix_TEST_index.png')
+    Plotter.conf_matrix(Y_test, result_classes_test, test_weights, norm='columns')
+    Plotter.save_plots(dir=plots_dir, filename='confusion_matrix_TEST_columns.png')
+    Plotter.conf_matrix(Y_test, result_classes_test, test_weights, norm=None)
+    Plotter.save_plots(dir=plots_dir, filename='confusion_matrix_TEST.png')
 
 main()

@@ -144,13 +144,13 @@ class plotter(object):
         y_predicted = pandas.Series(y_predicted, name='prediction')
         EventWeights_ = pandas.Series(EventWeights_, name='eventweights')
         if norm == 'index':
-            self.matrix = pandas.crosstab(y_true,y_predicted,EventWeights_,aggfunc=sum,normalize='index')
+            self.matrix = pandas.crosstab(y_true, y_predicted, EventWeights_, aggfunc="sum", normalize='index')
             vmax = 1
         elif norm == 'columns':
-            self.matrix = pandas.crosstab(y_true,y_predicted,EventWeights_,aggfunc=sum,normalize='columns')
+            self.matrix = pandas.crosstab(y_true, y_predicted, EventWeights_, aggfunc="sum", normalize='columns')
             vmax = 1
         else:
-            self.matrix = pandas.crosstab(y_true,y_predicted,EventWeights_,aggfunc=sum)
+            self.matrix = pandas.crosstab(y_true, y_predicted, EventWeights_, aggfunc="sum")
             vmax = 150
 
         self.labelsx = self.matrix.columns
@@ -162,10 +162,8 @@ class plotter(object):
         sns.set(font_scale=2.4)
         sns.heatmap(self.matrix, **opts)
         label_dict = {
-            0 : 'HH',
-            1 : 'yyjets',
-            2 : 'GJets',
-            3 : 'DY'
+            0 : 'background',
+            1 : 'signal'
         }
         for ax in (self.ax1,):
             #Shift tick location to bin centre
