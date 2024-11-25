@@ -120,259 +120,29 @@ def load_data(inputPath,variables,criteria):
     """
     my_cols_list=variables
     print ("Variable list: ",my_cols_list)
-    print ("Variable list[-5]: ",my_cols_list[:-5])
-    print ("Variable list[-6]: ",my_cols_list[:-6])
+    print ("Variable list[-4]: ",my_cols_list[:-4]) # INFO: 4 represent 4 additional variables that were added to the list of "column_headers" in the previous step
     data = pd.DataFrame(columns=my_cols_list)
     keys=['sig','bckg']
     for key in keys :
         print('key: ', key)
         if 'sig' in key:
             sampleNames=key
-            #subdir_name = 'Signal'
             subdir_name = ''
             fileNames = [
-            # 'GluGluToHHTo2G4Q_node_cHHH1_2017'
-            # 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017'
             'GluGluHToZZTo2L2Nu_M1000_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8',
             'GluGluHToZZTo2L2Nu_M500_TuneCP5_13TeV_powheg2_JHUGenV7011_pythia8',
-            # 'GluGluToHHTo2G4Q_node_3_2017',
-            # 'GluGluToHHTo2G4Q_node_4_2017',
-            # 'GluGluToHHTo2G4Q_node_5_2017',
-            # 'GluGluToHHTo2G4Q_node_6_2017',
-            # 'GluGluToHHTo2G4Q_node_7_2017',
-            # 'GluGluToHHTo2G4Q_node_8_2017',
-            # 'GluGluToHHTo2G4Q_node_9_2017',
-            # 'GluGluToHHTo2G4Q_node_10_2017',
-            # 'GluGluToHHTo2G4Q_node_11_2017',
-            # 'GluGluToHHTo2G4Q_node_12_2017',
-            # 'GluGluToHHTo2G4Q_node_SM_2017',
             ]
             target=1
         else:
             sampleNames = key
-            #subdir_name = 'Backgrounds'
             subdir_name = ''
             fileNames = [
-                # FH File Names
-                # 'DiPhotonJetsBox_MGG-80toInf_13TeV',
-
-                # 'TTGG_0Jets_TuneCP5_13TeV',
-                # 'TTGJets_TuneCP5_13TeV',
-
-                # 'ttHJetToGG_M125_13TeV',
-                # 'VBFHToGG_M125_13TeV',
-                # 'GluGluHToGG_M125_TuneCP5_13TeV',
-                # 'VHToGG_M125_13TeV',
-
                 'ZZTo2L2Nu'
-                # 'datadrivenQCD_v2'
             ]
             target=0
 
         for filen in fileNames:
-            if 'GluGluToHHTo2B2G_node_cHHH1_2017' in filen:
-                treename=['GluGluToHHTo2B2G_node_cHHH1_13TeV_HHWWggTag_1']
-                process_ID = 'bbgg'
-            if 'GluGluToHHTo2G4Q_node_cHHH1_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_2017' in filen:
-                treename=['GluGluToHHTo2G2ZTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_1_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_1_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_2_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_2_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_3_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_3_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_4_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_4_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_5_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_5_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_6_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_6_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_7_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_7_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_8_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_8_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_9_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_9_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_10_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_10_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_11_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_11_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_12_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_12_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_SM_2017' in filen:
-                treename=['GluGluToHHTo2G4Q_node_SM_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'GluGluToHHTo2G4Q_node_cHHH1_2018' in filen:
-                treename=['GluGluToHHTo2G4Q_node_cHHH1_13TeV_HHWWggTag_1']
-                process_ID = 'HH'
-            elif 'datadriven' in filen:
-                treename=['Data_13TeV_HHWWggTag_1']
-                process_ID = 'QCD'
-            elif 'GluGluHToGG' in filen:
-                treename=['ggh_125_13TeV_HHWWggTag_1']
-                process_ID = 'Hgg'
-            elif 'VBFHToGG' in filen:
-                treename=['vbf_125_13TeV_HHWWggTag_1']
-                process_ID = 'Hgg'
-            elif 'VHToGG' in filen:
-                treename=['wzh_125_13TeV_HHWWggTag_1']
-                process_ID = 'Hgg'
-            elif 'ttHJetToGG' in filen:
-                treename=['tth_125_13TeV_HHWWggTag_1']
-                process_ID = 'Hgg'
-            elif 'DiPhotonJetsBox_M40_80' in filen:
-                treename=['DiPhotonJetsBox_M40_80_Sherpa_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'DiPhoton'
-            elif 'DiPhotonJetsBox_MGG-80toInf' in filen:
-                treename=['DiPhotonJetsBox_MGG_80toInf_13TeV_Sherpa_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'DiPhoton'
-            elif 'GJet_Pt-20to40' in filen:
-                treename=['GJet_Pt_20to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'GJet'
-            elif 'GJet_Pt-20toInf' in filen:
-                treename=['GJet_Pt_20toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'GJet'
-            elif 'GJet_Pt-40toInf' in filen:
-                treename=['GJet_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'GJet'
-            elif 'QCD_Pt-30to40' in filen:
-                treename=['QCD_Pt_30to40_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'QCD'
-            elif 'QCD_Pt-30toInf' in filen:
-                treename=['QCD_Pt_30toInf_DoubleEMEnriched_MGG_40to80_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'QCD'
-            elif 'QCD_Pt-40toInf' in filen:
-                treename=['QCD_Pt_40toInf_DoubleEMEnriched_MGG_80toInf_TuneCP5_13TeV_Pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'QCD'
-            elif 'DYJetsToLL_M-50' in filen:
-                treename=['DYJetsToLL_M_50_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'DY'
-            elif 'TTGG_0Jets' in filen:
-                treename=['TTGG_0Jets_TuneCP5_13TeV_amcatnlo_madspin_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'TTGJets_TuneCP5' in filen:
-                treename=['TTGJets_TuneCP5_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'TTJets_HT-600to800' in filen:
-                treename=['TTJets_HT_600to800_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'TTJets_HT-800to1200' in filen:
-                treename=['TTJets_HT_800to1200_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'TTJets_HT-1200to2500' in filen:
-                treename=['TTJets_HT_1200to2500_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'TTJets_HT-2500toInf' in filen:
-                treename=['TTJets_HT_2500toInf_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'ttWJets' in filen:
-                treename=['ttWJets_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'TTJets_TuneCP5' in filen:
-                treename=['TTJets_TuneCP5_13TeV_amcatnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'TTGsJets'
-            elif 'W1JetsToLNu_LHEWpT_0-50' in filen:
-                treename=['W1JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W1JetsToLNu_LHEWpT_50-150' in filen:
-                treename=['W1JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W1JetsToLNu_LHEWpT_150-250' in filen:
-                treename=['W1JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W1JetsToLNu_LHEWpT_250-400' in filen:
-                treename=['W1JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W1JetsToLNu_LHEWpT_400-inf' in filen:
-                treename=['W1JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W2JetsToLNu_LHEWpT_0-50' in filen:
-                treename=['W2JetsToLNu_LHEWpT_0_50_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W2JetsToLNu_LHEWpT_50-150' in filen:
-                treename=['W2JetsToLNu_LHEWpT_50_150_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W2JetsToLNu_LHEWpT_150-250' in filen:
-                treename=['W2JetsToLNu_LHEWpT_150_250_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W2JetsToLNu_LHEWpT_250-400' in filen:
-                treename=['W2JetsToLNu_LHEWpT_250_400_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W2JetsToLNu_LHEWpT_400-inf' in filen:
-                treename=['W2JetsToLNu_LHEWpT_400_inf_TuneCP5_13TeV_amcnloFXFX_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W3JetsToLNu' in filen:
-                treename=['W3JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'W4JetsToLNu' in filen:
-                treename=['W4JetsToLNu_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'WGGJets' in filen:
-                treename=['WGGJets_TuneCP5_13TeV_madgraphMLM_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'WGJJToLNuGJJ_EWK' in filen:
-                treename=['WGJJToLNuGJJ_EWK_aQGC_FS_FM_TuneCP5_13TeV_madgraph_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'WGJJToLNu_EWK_QCD' in filen:
-                treename=['WGJJToLNu_EWK_QCD_TuneCP5_13TeV_madgraph_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WGsJets'
-            elif 'WWTo1L1Nu2Q' in filen:
-                treename=['WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WW'
-            elif 'WW_TuneCP5' in filen:
-                treename=['WW_TuneCP5_13TeV_pythia8_13TeV_HHWWggTag_1',
-                ]
-                process_ID = 'WW'
-            elif "GluGluHToZZTo2L2Nu" in filen:
+            if "GluGluHToZZTo2L2Nu" in filen:
                 treename=["Events"]
                 process_ID = "ggF"
             elif "ZZTo2L2Nu" in filen:
@@ -382,73 +152,55 @@ def load_data(inputPath,variables,criteria):
             fileName = os.path.join(subdir_name,filen)
             filename_fullpath = inputPath+"/"+fileName+".root"
             print("Input file: ", filename_fullpath)
-            #tfile = ROOT.TFile(filename_fullpath)
             tfile = uproot.open(filename_fullpath)
 
             if 'sig' in key:
                 for tname in treename:
-                    #ch_0 = tfile.Get("tagsDumper/trees/"+tname)
-                    #ch_0 = tfile.Get(tname)
                     if tfile is not None :
                         criteria_tmp = criteria
-                        #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
                         # Create dataframe for ttree
-                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria_tmp)
-                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list)
                         tree = tfile["Events"]
-                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
                         # This dataframe will be a chunk of the final total dataframe used in training
-                        #chunk_df = tree.pandas.df(tree, columns=my_cols_list)
-                        # chunk_df = tree.arrays(my_cols_list[:-7],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
-                        chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
+                        chunk_df = tree.arrays(my_cols_list[:-4],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
+                        # chunk_df = tree.arrays(my_cols_list[:-4],library='pd')
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
-                        chunk_df['key']=key
                         chunk_df['target']=target
-                        #chunk_df['weight']=chunk_df["weight"]
+                        chunk_df['key']=key
+                        # chunk_df['weight']=chunk_df["weight"]
                         #chunk_df['weight_NLO_SM']=chunk_df['weight_NLO_SM']
                         chunk_df['process_ID']=process_ID
                         chunk_df['classweight']=1.0
-                        chunk_df['unweighted'] = 1.0
-                        chunk_df['mass'] = int(filen.split("_")[1].replace("M",""))
+                        # chunk_df['unweighted'] = 1.0
+                        # chunk_df['mass'] = int(filen.split("_")[1].replace("M",""))
                         # Append this chunk to the 'total' dataframe
                         data = pd.concat([data,chunk_df], ignore_index=True)
                     else:
                         print("TTree == None")
-                    #ch_0.Delete()
             else:
                 for tname in treename:
-                    #ch_0 = tfile.Get("tagsDumper/trees/"+tname)
-                    #ch_0 = tfile.Get(tname)
                     if tfile is not None :
                         criteria_tmp = criteria
-                        #if process_ID == "HH": criteria_tmp = criteria + " && (event%2!=0)"
                         # Create dataframe for ttree
-                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-6], selection=criteria_tmp)
-                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list)
                         tree = tfile["Events"]
-                        #chunk_arr = tree2array(tree=ch_0, branches=my_cols_list[:-5], selection=criteria, start=0, stop=500)
                         # This dataframe will be a chunk of the final total dataframe used in training
-                        # chunk_df = tree.arrays(my_cols_list[:-7],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
-                        chunk_df = tree.arrays(my_cols_list[:-7],library='pd')
-                        #chunk_df = pd.DataFrame(chunk_arr, columns=my_cols_list)
+                        chunk_df = tree.arrays(my_cols_list[:-4],library='pd', entry_stop=5000) # INFO: This is for testing. JUST READ FIRST 5000 EVENTS
+                        # chunk_df = tree.arrays(my_cols_list[:-4],library='pd')
                         # Add values for the process defined columns.
                         # (i.e. the values that do not change for a given process).
-                        chunk_df['key']=key
                         chunk_df['target']=target
-                        #chunk_df['weight']=chunk_df["weight"]
+                        chunk_df['key']=key
+                        # chunk_df['weight']=chunk_df["weight"]
                         #chunk_df['weight_NLO_SM']=1.0
                         chunk_df['process_ID']=process_ID
                         chunk_df['classweight']=1.0
-                        chunk_df['unweighted'] = 1.0
-                        chunk_df['mass'] = 750
+                        # chunk_df['unweighted'] = 1.0
+                        # chunk_df['mass'] = 750
                         # Append this chunk to the 'total' dataframe
                         #data = data.append(chunk_df, ignore_index=True)
                         data = pd.concat([data,chunk_df], ignore_index=True)
                     else:
                         print("TTree == None")
-                    #ch_0.Delete()
-            #tfile.Close()
         if len(data) == 0 : continue
 
     return data
@@ -920,10 +672,6 @@ def main():
     suffix = args.suffix
 
     # Create instance of the input files directory
-    # inputs_file_path = 'HHWWgg_DataSignalMCnTuples/2017/'
-    # SL Lxplus = '/eos/user/b/bmarzocc/HHWWgg/January_2021_Production/2017/'
-    # FH Lxplus = '/eos/user/r/rasharma/post_doc_ihep/double-higgs/ntuples/January_2021_Production/DNN_MoreVar_v2/'
-    # FH IHEP = '/hpcfs/bes/mlgpu/sharma/ML_GPU/Samples/DNN_MoreVar_v2/'
     inputs_file_path = args.inputs_file_path
 
     hyp_param_scan=args.hyp_param_scan
@@ -984,9 +732,7 @@ def main():
     # Create plots subdirectory
     plots_dir = os.path.join(output_directory,'plots/')
     input_var_jsonFile = open(args.json,'r')
-    # selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7 && SumTwoMaxBjets<0.6186)'
-    selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7)'
-    # selection_criteria = '( (Leading_Photon_pt/CMS_hgg_mass) > 1/3. && (Subleading_Photon_pt/CMS_hgg_mass) > 1/4. && Leading_Photon_MVA>-0.7 && Subleading_Photon_MVA>-0.7 && New_pTBasedSel_WW_mass < 200)'
+    selection_criteria = '(pTL1>25)'
 
     # Load Variables from .json
     variable_list = json.load(input_var_jsonFile).items()
@@ -996,25 +742,23 @@ def main():
     # again and again. So, now I am sending the .csv file into the directory named
     # with the same name as the json file.
     #
-    # NOTE (IMP): If the list of variable changes then change the name of
+    # NOTE: (Important) If the list of variable changes then change the name of
     # json file. Else it will read the old list of input variables. If you
     # want to keep the same name of json file then remove the directory that
     # corresponds to this name (it it exits).
     #
-    # TO-DO: Make the code intelligent so that it will first check if the
-    # input variables is exactly same as the one that already exits. If yes,
-    # then delete the old entry and create a new one.
+    # TODO: Make the code intelligent so that it will first check if the input variables is exactly same as the one that already exits. If yes, then delete the old entry and create a new one.
     CSV_file_Dir_Name = (args.json).replace(".json","")
     if not os.path.isdir(CSV_file_Dir_Name): os.mkdir(CSV_file_Dir_Name)
-    os.system('cp '+args.json +' '+CSV_file_Dir_Name+"/") # also copy the json file to the new created directory
+    os.system('cp '+args.json +' '+CSV_file_Dir_Name+"/") # also copy the json file to the new created directory for the debug purpose.
 
     # Create list of headers for dataset .csv
     column_headers = []
     for key,var in variable_list:
         column_headers.append(key)
-    column_headers.append('weight')
-    column_headers.append('weight_NLO_SM')
-    column_headers.append('unweighted')
+    # column_headers.append('weight')
+    # column_headers.append('weight_NLO_SM')
+    # column_headers.append('unweighted')
     column_headers.append('target')
     column_headers.append('key')
     column_headers.append('classweight')
@@ -1190,9 +934,12 @@ def main():
     # Create dataframe containing input features only (for correlation matrix)
     train_df = data.iloc[:traindataset.shape[0]]
 
+    # print traindataset
+    print('<train-DNN> Training dataset: ', traindataset.head())
+
     # Event weights if wanted
-    train_weights = traindataset['weight'].values
-    test_weights = valdataset['weight'].values
+    # train_weights = traindataset['weight'].values
+    # test_weights = valdataset['weight'].values
 
     # Weights applied during training.
     #if weights=='BalanceYields':
@@ -1484,10 +1231,10 @@ def main():
     print('================')
     print('Training event labels: ', len(Y_train))
     print('Training event probs', len(result_probs))
-    print('Training event weights: ', len(train_weights))
+    # print('Training event weights: ', len(train_weights))
     print('Testing events: ', len(Y_test))
     print('Testing event probs', len(result_probs_test))
-    print('Testing event weights: ', len(test_weights))
+    # print('Testing event weights: ', len(test_weights))
     print('================')
 
     # Initialise output directory.
@@ -1495,7 +1242,8 @@ def main():
     Plotter.output_directory = output_directory
 
     # Make overfitting plots of output nodes
-    Plotter.binary_overfitting(model, Y_train, Y_test, result_probs, result_probs_test, plots_dir, train_weights, test_weights)
+    # Plotter.binary_overfitting(model, Y_train, Y_test, result_probs, result_probs_test, plots_dir, train_weights, test_weights)
+    Plotter.binary_overfitting(model, Y_train, Y_test, result_probs, result_probs_test, plots_dir)
 
     Plotter.ROC(model, X_test, Y_test, X_train, Y_train)
     Plotter.save_plots(dir=plots_dir, filename='ROC.png')

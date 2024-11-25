@@ -35,3 +35,7 @@ RunManySlurmCommand.sh
 input_variables*/
 *.patch
 xzz2l2nu_env/
+*.err
+*.log
+*.stdout
+*.out

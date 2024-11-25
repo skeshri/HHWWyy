@@ -9,3 +9,12 @@ pip install -r requirement.txt
 ulimit -s unlimited
 python train-BinaryDNN_WWvsBB.py -t 1 -i /eos/user/a/avijay/HZZ_mergedrootfiles/
 ```
+
+## Training
+
+```bash
+. /cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/setup.sh
+source xzz2l2nu_env/bin/activate
+ulimit -s unlimited
+python train-BinaryDNN_WWvsBB.py -t 1 -i /eos/user/a/avijay/HZZ_mergedrootfiles/
+```
