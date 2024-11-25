@@ -190,12 +190,21 @@ def main():
     parser.add_argument('--batch_size', type=int, default=32, help="Batch size.")
     parser.add_argument('--learn_rate', type=float, default=0.001, help="Learning rate.")
     parser.add_argument('--num_events', type=int, default=1000, help="Number of events to load.")
+    parser.add_argument('--json', type=str, default='input_variables.json', help="Input variable JSON file.")
+
     args = parser.parse_args()
 
     args.output_dir = os.path.join(args.output_dir, f"{args.job_name}")
     ensure_directory_exists(args.output_dir)
 
-    variables = ["pTL1", "etaL1", "phiL1", "pTL2", "etaL2", "phiL2", "massZ1", "pTZ1", "PuppiMET_phi", "HZZ2l2qNu_nJets", "HZZ2l2nu_minDPhi_METAK4"]
+    # Create list of headers for dataset .csv
+    input_var_jsonFile = open(args.json,'r')
+    variable_list = json.load(input_var_jsonFile).items()
+    variables = []
+    for key,var in variable_list:
+        variables.append(key)
+
+    print(f"Variables: {variables}")
 
     # Define paths and parameters
     csv_path = os.path.join(args.output_dir, "output_dataframe.csv")
@@ -217,7 +226,9 @@ def main():
     Y_train = preprocess_data(pd.DataFrame(Y_train)).values
     Y_val = preprocess_data(pd.DataFrame(Y_val)).values
 
-    # history = None # Initialize history
+    # Create plots directory
+    plots_dir = os.path.join(args.output_dir, "plots")
+    ensure_directory_exists(plots_dir)
 
     # Check if the model already exists
     if os.path.exists(model_path):
@@ -254,10 +265,6 @@ def main():
 
     # Classification report
     print(classification_report(y_true, y_pred, target_names=labels))
-
-    # Create plots directory
-    plots_dir = os.path.join(args.output_dir, "plots")
-    ensure_directory_exists(plots_dir)
 
     # Define feature columns by excluding non-feature variables
     feature_columns = [col for col in variables if col not in ['target', 'process_ID', 'classweight']]

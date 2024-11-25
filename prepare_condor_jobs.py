@@ -18,16 +18,17 @@ source {virtual_env}/bin/activate
 
 # Run the training
 name='{job_name}'
-python train-BinaryDNN_WWvsBB.py -t 1 -i {input_path} -s ${{name}} --nEvents {max_events} -l 1 -j {json}
+# python train-BinaryDNN_WWvsBB.py -t 1 -i {input_path} -s ${{name}} --nEvents {max_events} -l 1 -j {json}
+python train-BinaryDNN_WWvsBB_NEW.py --inputPath /eos/user/a/avijay/HZZ_mergedrootfiles/ --output_dir /eos/user/r/rasharma/HZZ2l2nu/  --num_events -1 --job_name DNN_FullStats_25Nov
 
 echo "Training Done"
 
 # Copy the output to eos
-echo "Copying the output to eos"
-cp -r HHWWBBDNN_binary_${{name}}_BalanceYields {eos_path}
-echo "Output copied to eos"
-ls {eos_path}
-echo "All Done"
+# echo "Copying the output to eos"
+# cp -r HHWWBBDNN_binary_${{name}}_BalanceYields {eos_path}
+# echo "Output copied to eos"
+# ls {eos_path}
+# echo "All Done"
 """
     with open(script_name, "w") as sh_file:
         sh_file.write(sh_content)
