@@ -28,6 +28,10 @@ python prepare_condor_jobs.py --job_name "test_workday" --max_events 1000 --job_
 
 # final
 python prepare_condor_jobs.py --job_name "Final_25Nov_tomorrow_MoreVariables" --max_events -1 --job_flavour "tomorrow"
+
+python prepare_condor_jobs.py --job_name "Final_25Nov_tomorrow_parametric" --max_events -1 --job_flavour "tomorrow"
+
+
 ```
 
 
